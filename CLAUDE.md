@@ -60,3 +60,12 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
   - `verifier.ts` — skeleton SQL verification (LIMIT, WHERE, scan strategy)
 - `__tests__/` — vitest tests
   - `__tests__/query/` — contract, type-inference, registry, verifier
+
+## Documentation Maintenance
+
+After completing any work in this repository, update the relevant documentation to reflect the changes:
+
+- **This file (`CLAUDE.md`)** — update File Organization, Naming Conventions, Key Patterns, or Commands sections if new files, types, patterns, or scripts were added/changed
+- **`README.md`** — update if public API surface, usage examples, or project scope changed
+- **JSDoc on public APIs** — add or update when signatures or behavior change
+- **`__tests__/`** — ensure new or changed behavior has corresponding test coverage
