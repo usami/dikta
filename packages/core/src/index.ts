@@ -12,6 +12,11 @@ export { createRegistry } from "./registry.js";
 // Serialization
 export { serializeRegistry, deserializeRegistry } from "./serialize.js";
 
+// Query contracts
+export { defineQuery } from "./query/contract.js";
+export { createQueryRegistry } from "./query/registry.js";
+export { verifyMaxRows, verifyRowFilter, verifyScanStrategy } from "./query/verifier.js";
+
 // Types
 export type {
   FieldPolicy,
@@ -31,4 +36,25 @@ export type {
   EntityDefinitionOptions,
   EntityRegistry,
   Relationship,
+  ParamKind,
+  ParamKindToType,
+  ParamDefinition,
+  ShapeKind,
+  ShapeKindToType,
+  JoinShapeField,
+  ShapeField,
+  OrderingSpec,
+  PaginationKind,
+  ReturnsDefinition,
+  ScanStrategy,
+  PerformanceContract,
+  SecurityContract,
+  QueryContractConfig,
+  QueryContract,
+  InferParams,
+  InferResult,
+  ValidationError,
+  PerformanceConflict,
+  QueryRegistry,
+  VerificationResult,
 } from "./types.js";
