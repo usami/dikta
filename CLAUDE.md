@@ -42,6 +42,10 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - **FieldRole**: `"identifier" | "monetary" | "audit_timestamp" | "display_name" | "description" | "status" | "quantity" | "reference" | "general"`
 - **Policy keys**: `pii`, `retention`, `external_exposure`, `access`
 - **CascadeRule**: `"soft_delete" | "cascade" | "restrict" | "set_null"`
+- **ParamKind**: `"uuid" | "string" | "int" | "decimal" | "boolean" | "timestamp"` — uses `"int"` not `"integer"`
+- **ShapeKind**: `"uuid" | "string" | "decimal" | "integer" | "int" | "boolean" | "timestamp"` — accepts both `"int"` and `"integer"`
+- **ScanStrategy**: `"index_only" | "seq_scan_ok"`
+- **PaginationKind**: `"cursor" | "offset"`
 
 ## File Organization
 
@@ -49,4 +53,10 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - `src/entity.ts` — defineEntity + type inference
 - `src/registry.ts` — runtime entity collection
 - `src/serialize.ts` — JSON round-trip
-- `__tests__/` — vitest tests (type-inference, fields, entity, registry, serialize)
+- `src/query/` — query contract system
+  - `types.ts` — ParamKind, ShapeKind, QueryContractConfig, InferParams/InferResult
+  - `contract.ts` — defineQuery + const generics
+  - `registry.ts` — createQueryRegistry + validation against entity schema
+  - `verifier.ts` — skeleton SQL verification (LIMIT, WHERE, scan strategy)
+- `__tests__/` — vitest tests
+  - `__tests__/query/` — contract, type-inference, registry, verifier

@@ -84,3 +84,60 @@ Type inference works at the definition site (`typeof entity.infer`), not at the
 registry lookup site. This is a deliberate tradeoff: registries are for runtime
 operations (policy scanning, serialization), while type inference operates on
 individual entity definitions.
+
+## `"int"` vs `"integer"` in query params
+
+**Decision**: `ParamKind` uses `"int"`, while `FieldKind` uses `"integer"`.
+`ShapeKind` accepts both.
+
+**Rationale**: The spec examples use `"int"` for query parameters — this is a
+deliberate distinction from entity field kinds. Query params are a separate
+domain (SQL parameter binding) where `"int"` is idiomatic. `ShapeKind` accepts
+both for flexibility since shape fields may reference either domain.
+
+## JOIN fields default to `string`
+
+**Decision**: `{ from: "Customer.name" }` infers `string` unless an explicit
+`type` is provided: `{ from: "Customer.balance", type: "decimal" }`.
+
+**Alternatives considered**:
+- Require explicit `type` on all JOIN fields — verbose, most JOINs fetch strings
+- Infer from entity schema — requires runtime schema lookup at type level, not feasible
+
+**Rationale**: Most JOIN fields fetch display names or identifiers (strings).
+The default covers the common case; `type` override handles the rest.
+
+## `Prettify<T>` for InferParams
+
+**Decision**: `InferParams` wraps its result in `Prettify<T>` (`{ [K in keyof T]: T[K] } & {}`).
+
+**Rationale**: Without `Prettify`, `InferParams` produces `{ required } & { optional? }` —
+an intersection type that shows as two separate objects in IDE tooltips. `Prettify`
+flattens this into a single clean object type. This is a cosmetic improvement but
+significantly helps DX when hovering over inferred types.
+
+## Lazy query validation
+
+**Decision**: `createQueryRegistry()` only checks duplicates eagerly. Full schema
+validation requires an explicit `validate()` call.
+
+**Alternatives considered**:
+- Validate everything in the constructor — forces entity registry to be complete at
+  construction time, prevents incremental building
+- No validation — runtime errors surface too late
+
+**Rationale**: Eager duplicate detection catches obvious mistakes immediately.
+Schema validation (entity existence, field existence, relationship paths) is
+deferred to `validate()` because the entity registry may be populated
+independently or incrementally. This matches the pattern where you build first,
+validate once.
+
+## Query verifier as skeleton
+
+**Decision**: Phase 2 verifier uses regex-based SQL string analysis. `verifyScanStrategy`
+is a stub returning "deferred to Phase 3".
+
+**Rationale**: Real scan strategy verification requires EXPLAIN plan analysis against
+a live database. The skeleton establishes the interface and handles the checks that
+can be done via string analysis (LIMIT, WHERE). Phase 3 will add DB-connected
+verification.
