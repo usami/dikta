@@ -1,6 +1,7 @@
 {
   "name": "@dikta/agent-protocol",
   "version": "0.1.0",
+  "license": "MIT",
   "description": "Agent-facing protocol for Dikta intent schemas",
   "type": "module",
   "main": "./dist/index.js",

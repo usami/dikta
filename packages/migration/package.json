@@ -1,6 +1,7 @@
 {
   "name": "@dikta/migration",
   "version": "0.1.0",
+  "license": "MIT",
   "description": "Verified Migration Planner for Dikta schemas",
   "type": "module",
   "main": "./dist/index.js",

@@ -1,6 +1,7 @@
 {
   "name": "@dikta/core",
   "version": "0.1.0",
+  "license": "MIT",
   "description": "Intent Schema Definition Engine for the AI agent era",
   "type": "module",
   "main": "./dist/index.js",
