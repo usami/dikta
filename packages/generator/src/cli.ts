@@ -1,0 +1,116 @@
+#!/usr/bin/env node
+
+import { writeFileSync, mkdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { Command } from "commander";
+import { loadConfig } from "./config.js";
+import { generateAll, createPostgreSQLGenerator } from "./generator.js";
+import { generateDDL } from "./targets/postgresql/ddl.js";
+import type { GeneratedFile } from "./types.js";
+
+function writeFiles(files: readonly GeneratedFile[], outputDir: string): void {
+  for (const file of files) {
+    const fullPath = join(outputDir, file.path);
+    mkdirSync(dirname(fullPath), { recursive: true });
+    writeFileSync(fullPath, file.content, "utf-8");
+  }
+}
+
+const program = new Command()
+  .name("dikta")
+  .description("Code generator for Dikta intent schemas and query contracts")
+  .version("0.1.0");
+
+program
+  .command("generate")
+  .description("Generate PostgreSQL DDL, access layer, validators, and tests")
+  .option("--ddl", "Generate only DDL files")
+  .option("--access", "Generate only access layer files")
+  .option("--validators", "Generate only validator files")
+  .option("--tests", "Generate only contract test files")
+  .option("-o, --output <dir>", "Output directory", ".generated")
+  .option("-c, --config <path>", "Path to dikta config file")
+  .action(async (opts: {
+    ddl?: boolean;
+    access?: boolean;
+    validators?: boolean;
+    tests?: boolean;
+    output: string;
+    config?: string;
+  }) => {
+    try {
+      const config = await loadConfig(opts.config);
+      const generator = createPostgreSQLGenerator();
+      const selective = opts.ddl || opts.access || opts.validators || opts.tests;
+
+      let files: readonly GeneratedFile[];
+
+      if (selective) {
+        const parts: GeneratedFile[] = [];
+        if (opts.ddl) {
+          parts.push(...generateDDL(config.schema, config.queries));
+        }
+        if (opts.access) {
+          parts.push(
+            ...generator.generateAccessLayer(config.schema, config.queries),
+          );
+        }
+        if (opts.validators) {
+          parts.push(...generator.generateValidators(config.schema));
+        }
+        if (opts.tests) {
+          parts.push(...generator.generateContractTests(config.queries));
+        }
+        files = parts;
+      } else {
+        files = generateAll(config.schema, config.queries);
+      }
+
+      writeFiles(files, opts.output);
+      console.log(`Generated ${files.length} file(s) in ${opts.output}/`);
+    } catch (error) {
+      console.error(
+        `Error: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      process.exit(1);
+    }
+  });
+
+program
+  .command("verify")
+  .description("Verify query contracts against schema without generating")
+  .option("-c, --config <path>", "Path to dikta config file")
+  .action(async (opts: { config?: string }) => {
+    try {
+      const config = await loadConfig(opts.config);
+
+      const errors = config.queries.validate();
+      if (errors.length > 0) {
+        console.error("Contract validation failed:");
+        for (const error of errors) {
+          const field = error.field ? `.${error.field}` : "";
+          console.error(`  - ${error.query}${field}: ${error.message}`);
+        }
+        process.exit(1);
+      }
+
+      const conflicts = config.queries.detectPerformanceConflicts();
+      if (conflicts.length > 0) {
+        console.warn("Performance conflicts detected:");
+        for (const conflict of conflicts) {
+          console.warn(
+            `  - ${conflict.queries.join(", ")}: ${conflict.message}`,
+          );
+        }
+      }
+
+      console.log("All contracts verified successfully.");
+    } catch (error) {
+      console.error(
+        `Error: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      process.exit(1);
+    }
+  });
+
+program.parse();

@@ -6,6 +6,7 @@
 dikta/
   packages/
     core/          @dikta/core — Intent Schema Definition Engine
+    generator/     @dikta/generator — Code Generation Engine
 ```
 
 - pnpm workspace, ESM-only
@@ -49,6 +50,8 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 
 ## File Organization
 
+### packages/core
+
 - `src/fields/` — field builders and types
 - `src/entity.ts` — defineEntity + type inference
 - `src/registry.ts` — runtime entity collection
@@ -60,6 +63,24 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
   - `verifier.ts` — skeleton SQL verification (LIMIT, WHERE, scan strategy)
 - `__tests__/` — vitest tests
   - `__tests__/query/` — contract, type-inference, registry, verifier
+
+### packages/generator
+
+- `src/types.ts` — GeneratedFile, CodeGenerator interface
+- `src/file.ts` — header comment, naming utils (toSnakeCase, toPascalCase, toCamelCase)
+- `src/manifest.ts` — SHA-256 hashing, manifest.json generation
+- `src/generator.ts` — orchestrator: composes PostgreSQL target modules
+- `src/config.ts` — DiktaConfig type + config file discovery
+- `src/cli.ts` — commander CLI (generate, verify commands)
+- `src/index.ts` — public API barrel
+- `src/targets/postgresql/`
+  - `types.ts` — FieldKind->PG type, ParamKind->TS type, CascadeRule->PG mapping
+  - `topo-sort.ts` — Kahn's algorithm for FK dependency ordering
+  - `ddl.ts` — CREATE TABLE, INDEX, COMMENT generation
+  - `access.ts` — typed query functions (postgres.js sql tagged template)
+  - `validator.ts` — invariant pattern matching -> check functions
+  - `test.ts` — contract test file generation
+- `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator
 
 ## Documentation Maintenance
 

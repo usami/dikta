@@ -111,6 +111,34 @@ verifyRowFilter(sql, "customer_id");         // checks WHERE clause
 verifyScanStrategy(sql, "index_only");       // checks for sequential scans
 ```
 
+### Generate Code
+
+```bash
+# Generate all: DDL, access layer, validators, contract tests
+npx dikta generate
+
+# Generate selectively
+npx dikta generate --ddl
+npx dikta generate --access
+npx dikta generate --validators
+npx dikta generate --tests
+
+# Custom output directory
+npx dikta generate --output ./src/generated
+
+# Verify contracts without generating
+npx dikta verify
+```
+
+Or use the programmatic API:
+
+```typescript
+import { generateAll, createPostgreSQLGenerator } from "@dikta/generator";
+
+const files = generateAll(schema, queries);
+// files: GeneratedFile[] with path, content, purpose, regeneratable
+```
+
 ## Key Design Decisions
 
 | Principle | What it means |
@@ -148,6 +176,7 @@ Humans manage intent. Machines manage implementation.
 
 ```bash
 pnpm add @dikta/core
+pnpm add -D @dikta/generator
 ```
 
 ## Status
@@ -158,7 +187,7 @@ Dikta is in early development. The current implementation covers:
 |---|---|---|
 | 1 | Intent Schema engine (`defineEntity`, field builders, type inference, serialization) | Done |
 | 2 | Query Contract system (`defineQuery`, schema validation, SQL verification) | Done |
-| 3 | Code generation (CLI, DDL, access functions, validators) | Planned |
+| 3 | Code generation (CLI, DDL, access functions, validators) | Done |
 | 4 | Migration planner (schema diff, safe migration SQL) | Planned |
 | 5 | Agent protocol (agent-context.json, violation reporter) | Planned |
 
