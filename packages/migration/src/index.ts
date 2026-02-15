@@ -1,0 +1,55 @@
+// Definition builders
+export {
+  defineMigration,
+  addEntity,
+  removeEntity,
+  renameEntity,
+  addField,
+  removeField,
+  renameField,
+  alterField,
+  addInvariant,
+  removeInvariant,
+  fieldDefinitionToSpec,
+} from "./definition.js";
+
+// Planner
+export { planMigration } from "./planner.js";
+
+// Safety
+export { evaluateSafety } from "./safety.js";
+
+// Impact
+export { analyzeImpact } from "./impact.js";
+
+// SQL generation
+export { generateMigrationFiles, generateMigrationDirectory } from "./sql-generator.js";
+
+// Types
+export type {
+  SchemaChange,
+  AddEntityChange,
+  RemoveEntityChange,
+  RenameEntityChange,
+  AddFieldChange,
+  RemoveFieldChange,
+  RenameFieldChange,
+  AlterFieldChange,
+  AddInvariantChange,
+  RemoveInvariantChange,
+  FieldSpec,
+  FieldAlterations,
+  SafetyLevel,
+  ChangeRisk,
+  SafetyEvaluation,
+  ImpactSeverity,
+  ContractImpact,
+  IndexRecommendation,
+  BackfillRequirement,
+  MigrationImpact,
+  MigrationConfig,
+  MigrationDefinition,
+  MigrationFiles,
+  MigrationMetadata,
+  MigrationPlan,
+} from "./types.js";
