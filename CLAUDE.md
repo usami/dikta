@@ -5,9 +5,10 @@
 ```
 dikta/
   packages/
-    core/          @dikta/core — Intent Schema Definition Engine
-    generator/     @dikta/generator — Code Generation Engine
-    migration/     @dikta/migration — Verified Migration Planner
+    core/              @dikta/core — Intent Schema Definition Engine
+    agent-protocol/    @dikta/agent-protocol — Agent-Facing Protocol
+    generator/         @dikta/generator — Code Generation Engine
+    migration/         @dikta/migration — Verified Migration Planner
 ```
 
 - pnpm workspace, ESM-only
@@ -51,6 +52,8 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - **SafetyLevel**: `"safe" | "caution" | "dangerous"`
 - **ImpactSeverity**: `"breaking" | "compatible" | "informational"`
 - **SchemaChange kind**: `"add_entity" | "remove_entity" | "rename_entity" | "add_field" | "remove_field" | "rename_field" | "alter_field" | "add_invariant" | "remove_invariant"`
+- **TaskKind**: `"implement_query" | "add_entity" | "modify_schema" | "fix_contract_violation"`
+- **ViolationKind**: `"scan_strategy" | "max_rows" | "row_filter" | "max_joins" | "validation_error" | "performance_conflict"`
 
 ## File Organization
 
@@ -75,7 +78,7 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - `src/manifest.ts` — SHA-256 hashing, manifest.json generation
 - `src/generator.ts` — orchestrator: composes PostgreSQL target modules
 - `src/config.ts` — DiktaConfig type + config file discovery
-- `src/cli.ts` — commander CLI (generate, verify commands)
+- `src/cli.ts` — commander CLI (generate, verify, context commands)
 - `src/index.ts` — public API barrel
 - `src/targets/postgresql/`
   - `types.ts` — FieldKind->PG type, ParamKind->TS type, CascadeRule->PG mapping
@@ -85,6 +88,16 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
   - `validator.ts` — invariant pattern matching -> check functions
   - `test.ts` — contract test file generation
 - `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator
+
+### packages/agent-protocol
+
+- `src/types.ts` — AgentContext, AgentTask, ViolationReport, AgentProtocolConfig types
+- `src/context-generator.ts` — generateAgentContext: EntityRegistry + QueryRegistry -> AgentContext
+- `src/task-protocol.ts` — AgentTask factory functions (implementQueryTask, addEntityTask, etc.)
+- `src/violation-reporter.ts` — buildViolationReport: validation errors + SQL verification -> ViolationReport
+- `src/instructions.ts` — generateInstructions: AgentContext -> markdown instructions
+- `src/index.ts` — public API barrel
+- `__tests__/` — context-generator, task-protocol, violation-reporter, instructions
 
 ### packages/migration
 

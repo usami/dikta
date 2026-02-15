@@ -6,6 +6,13 @@ import { Command } from "commander";
 import { loadConfig } from "./config.js";
 import { generateAll, createPostgreSQLGenerator } from "./generator.js";
 import { generateDDL } from "./targets/postgresql/ddl.js";
+import {
+  generateAgentContext,
+  serializeAgentContext,
+  generateInstructions,
+  buildViolationReport,
+  serializeViolationReport,
+} from "@dikta/agent-protocol";
 import type { GeneratedFile } from "./types.js";
 
 function writeFiles(files: readonly GeneratedFile[], outputDir: string): void {
@@ -80,9 +87,19 @@ program
   .command("verify")
   .description("Verify query contracts against schema without generating")
   .option("-c, --config <path>", "Path to dikta config file")
-  .action(async (opts: { config?: string }) => {
+  .option("-f, --format <format>", "Output format: text (default) or agent", "text")
+  .action(async (opts: { config?: string; format: string }) => {
     try {
       const config = await loadConfig(opts.config);
+
+      if (opts.format === "agent") {
+        const report = buildViolationReport(config.queries);
+        console.log(serializeViolationReport(report));
+        if (report.violations.length > 0) {
+          process.exit(1);
+        }
+        return;
+      }
 
       const errors = config.queries.validate();
       if (errors.length > 0) {
@@ -105,6 +122,42 @@ program
       }
 
       console.log("All contracts verified successfully.");
+    } catch (error) {
+      console.error(
+        `Error: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      process.exit(1);
+    }
+  });
+
+program
+  .command("context")
+  .description("Generate agent context files in .dikta/ directory")
+  .option("-c, --config <path>", "Path to dikta config file")
+  .option("-o, --output <dir>", "Output directory", ".dikta")
+  .action(async (opts: { config?: string; output: string }) => {
+    try {
+      const config = await loadConfig(opts.config);
+
+      const context = generateAgentContext(
+        config.schema,
+        config.queries,
+        config.agentProtocol,
+      );
+
+      mkdirSync(opts.output, { recursive: true });
+
+      // Write agent-context.json
+      const contextPath = join(opts.output, "agent-context.json");
+      writeFileSync(contextPath, serializeAgentContext(context), "utf-8");
+
+      // Write INSTRUCTIONS.md
+      const instructionsPath = join(opts.output, "INSTRUCTIONS.md");
+      writeFileSync(instructionsPath, generateInstructions(context), "utf-8");
+
+      console.log(`Generated agent context in ${opts.output}/`);
+      console.log(`  - ${contextPath}`);
+      console.log(`  - ${instructionsPath}`);
     } catch (error) {
       console.error(
         `Error: ${error instanceof Error ? error.message : String(error)}`,

@@ -17,3 +17,4 @@ export { fieldKindToPGType, cascadeRuleToPG } from "./targets/postgresql/types.j
 export type { GeneratedFile, CodeGenerator } from "./types.js";
 export type { DiktaConfig } from "./config.js";
 export type { Manifest, ManifestEntry } from "./manifest.js";
+export type { AgentProtocolConfig } from "@dikta/agent-protocol";

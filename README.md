@@ -128,6 +128,12 @@ npx dikta generate --output ./src/generated
 
 # Verify contracts without generating
 npx dikta verify
+
+# Verify with agent-friendly JSON output
+npx dikta verify --format agent
+
+# Generate agent context files (.dikta/agent-context.json + INSTRUCTIONS.md)
+npx dikta context
 ```
 
 Or use the programmatic API:
@@ -177,6 +183,7 @@ Humans manage intent. Machines manage implementation.
 ```bash
 pnpm add @dikta/core
 pnpm add -D @dikta/generator
+pnpm add -D @dikta/agent-protocol
 pnpm add -D @dikta/migration
 ```
 
@@ -190,7 +197,7 @@ Dikta is in early development. The current implementation covers:
 | 2 | Query Contract system (`defineQuery`, schema validation, SQL verification) | Done |
 | 3 | Code generation (CLI, DDL, access functions, validators) | Done |
 | 4 | Migration planner (schema diff, safe migration SQL) | Done |
-| 5 | Agent protocol (agent-context.json, violation reporter) | Planned |
+| 5 | Agent protocol (agent-context.json, violation reporter) | Done |
 
 ## Development
 

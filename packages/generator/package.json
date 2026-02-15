@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@dikta/agent-protocol": "workspace:*",
     "@dikta/core": "workspace:*",
     "commander": "^13.0.0"
   },

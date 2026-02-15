@@ -1,10 +1,12 @@
 import type { EntityRegistry, QueryRegistry } from "@dikta/core";
+import type { AgentProtocolConfig } from "@dikta/agent-protocol";
 
 export interface DiktaConfig {
   readonly schema: EntityRegistry;
   readonly queries: QueryRegistry;
   readonly output?: string;
   readonly target?: "postgresql";
+  readonly agentProtocol?: AgentProtocolConfig;
 }
 
 const CONFIG_FILE_NAMES = [
