@@ -202,7 +202,7 @@ Dikta is in early development. The current implementation covers:
 ## Development
 
 ```bash
-git clone https://github.com/user/dikta.git
+git clone https://github.com/usami/dikta.git
 cd dikta
 pnpm install
 pnpm build      # tsup -> dist/
