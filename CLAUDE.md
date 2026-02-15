@@ -7,6 +7,7 @@ dikta/
   packages/
     core/          @dikta/core — Intent Schema Definition Engine
     generator/     @dikta/generator — Code Generation Engine
+    migration/     @dikta/migration — Verified Migration Planner
 ```
 
 - pnpm workspace, ESM-only
@@ -47,6 +48,9 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - **ShapeKind**: `"uuid" | "string" | "decimal" | "integer" | "int" | "boolean" | "timestamp"` — accepts both `"int"` and `"integer"`
 - **ScanStrategy**: `"index_only" | "seq_scan_ok"`
 - **PaginationKind**: `"cursor" | "offset"`
+- **SafetyLevel**: `"safe" | "caution" | "dangerous"`
+- **ImpactSeverity**: `"breaking" | "compatible" | "informational"`
+- **SchemaChange kind**: `"add_entity" | "remove_entity" | "rename_entity" | "add_field" | "remove_field" | "rename_field" | "alter_field" | "add_invariant" | "remove_invariant"`
 
 ## File Organization
 
@@ -81,6 +85,17 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
   - `validator.ts` — invariant pattern matching -> check functions
   - `test.ts` — contract test file generation
 - `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator
+
+### packages/migration
+
+- `src/types.ts` — SchemaChange (discriminated union), FieldSpec, Safety/Impact/Migration types
+- `src/definition.ts` — defineMigration API, change builders (addEntity, removeField, etc.), fieldDefinitionToSpec
+- `src/planner.ts` — planMigration: schema diff engine comparing two EntityRegistry instances
+- `src/safety.ts` — evaluateSafety: PostgreSQL-specific risk evaluation per change kind
+- `src/impact.ts` — analyzeImpact: query contract impact analysis (breaking/compatible/informational)
+- `src/sql-generator.ts` — generateMigrationFiles/Directory: up.sql, down.sql, verify.sql, metadata.json
+- `src/index.ts` — public API barrel
+- `__tests__/` — definition, planner, safety, impact, sql-generator, integration
 
 ## Documentation Maintenance
 

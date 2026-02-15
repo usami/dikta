@@ -177,6 +177,7 @@ Humans manage intent. Machines manage implementation.
 ```bash
 pnpm add @dikta/core
 pnpm add -D @dikta/generator
+pnpm add -D @dikta/migration
 ```
 
 ## Status
@@ -188,7 +189,7 @@ Dikta is in early development. The current implementation covers:
 | 1 | Intent Schema engine (`defineEntity`, field builders, type inference, serialization) | Done |
 | 2 | Query Contract system (`defineQuery`, schema validation, SQL verification) | Done |
 | 3 | Code generation (CLI, DDL, access functions, validators) | Done |
-| 4 | Migration planner (schema diff, safe migration SQL) | Planned |
+| 4 | Migration planner (schema diff, safe migration SQL) | Done |
 | 5 | Agent protocol (agent-context.json, violation reporter) | Planned |
 
 ## Development
