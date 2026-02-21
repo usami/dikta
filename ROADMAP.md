@@ -2,12 +2,16 @@
 
 ## Context
 
-Dikta is a schema-first code generation monorepo with 4 packages: core, generator, agent-protocol, migration. Supports PostgreSQL and MySQL. The `CodeGenerator` interface, `DiktaConfig.target` field, and `MigrationDialect` abstraction provide extension points for additional database targets.
+Dikta is a schema-first code generation monorepo with 4 packages: core, generator, agent-protocol, migration. Supports PostgreSQL, MySQL, and SQLite. The `CodeGenerator` interface, `DiktaConfig.target` field, and `MigrationDialect` abstraction provide extension points for additional database targets.
 
 ### Completed
 
 - **MySQL Target Support** — dialect abstraction, generator, migration (all 3 phases)
 - **Runtime Validation Generation** — Zod schema generation from entity definitions
+- **SQLite Target** — generator, migration, integration tests (all 3 phases)
+- **OpenAPI Specification Generation** — entity schemas, query path operations, spec assembly (all 3 phases)
+- **ER Diagram Generation** — Mermaid ER diagram from entity registry + CLI integration
+- **Seed Data Generator** — Faker-based test data generation with topological ordering + CLI integration
 
 ---
 
@@ -112,11 +116,11 @@ Independent generators that consume EntityRegistry for non-database purposes.
 
 ### Phase 2 — Seed Data Generator
 
-- [ ] `packages/generator/src/seed.ts` — faker.js-based test data generation
+- [x] `packages/generator/src/seed.ts` — faker.js-based test data generation
   - FieldRole -> appropriate faker method (monetary -> finance, display_name -> person, etc.)
   - Respect ref field FK ordering (topological sort)
   - Configurable row count per entity
-- [ ] CLI integration (`--seed` flag)
+- [x] CLI integration (`--seed` flag)
 
 ### Phase 3 — Multi-Version Migration Chain
 
