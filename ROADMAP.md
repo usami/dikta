@@ -28,18 +28,18 @@ Lightweight target for local dev / testing. SQLite's limited ALTER TABLE support
 
 ### Phase 2 — SQLite Migration
 
-- [ ] Create `packages/migration/src/dialects/sqlite.ts`
+- [x] Create `packages/migration/src/dialects/sqlite.ts`
   - Table rebuild pattern for column alterations (CREATE new -> copy data -> DROP old -> RENAME)
   - No native `DROP COLUMN` before SQLite 3.35 — use rebuild
   - No `ALTER COLUMN TYPE` — always rebuild
   - ENUM via CHECK constraint migration
-- [ ] Wire into `createMigrationDialect("sqlite")` factory
-- [ ] Target-aware safety notes in `safety.ts` (table rebuild lock implications)
+- [x] Wire into `createMigrationDialect("sqlite")` factory
+- [x] Target-aware safety notes in `safety.ts` (table rebuild lock implications)
 
 ### Phase 3 — SQLite Tests
 
-- [ ] Generator tests: DDL output, access layer, type mapping
-- [ ] Migration tests: table rebuild correctness, data preservation
+- [x] Generator tests: DDL output, access layer, type mapping
+- [x] Migration tests: table rebuild correctness, data preservation
 - [ ] Integration test with better-sqlite3 in-memory database
 
 ---

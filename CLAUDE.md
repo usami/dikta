@@ -113,7 +113,7 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
   - `access.ts` — typed query functions (better-sqlite3 Database, synchronous API, db.prepare().all())
   - `validator.ts` — re-exports from postgresql (DB-agnostic)
   - `test.ts` — re-exports from postgresql (DB-agnostic)
-- `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator, dialect, mysql-dialect, mysql-ddl, mysql-access, schema, openapi-schema, openapi-paths, openapi-spec, diagram
+- `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator, dialect, mysql-dialect, mysql-ddl, mysql-access, sqlite-dialect, sqlite-ddl, sqlite-access, schema, openapi-schema, openapi-paths, openapi-spec, diagram
 
 ### packages/agent-protocol
 
@@ -138,7 +138,7 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - `src/dialects/sqlite.ts` — SQLite MigrationDialect: double-quote identifiers, table rebuild comments for unsupported ALTER TABLE ops, sqlite_master/pragma_table_info verification
 - `src/dialects/factory.ts` — `createMigrationDialect(target)` dispatch
 - `src/index.ts` — public API barrel
-- `__tests__/` — definition, planner, safety, impact, sql-generator, integration, mysql-sql-generator, mysql-safety
+- `__tests__/` — definition, planner, safety, impact, sql-generator, integration, mysql-sql-generator, mysql-safety, sqlite-sql-generator, sqlite-safety
 
 ## Documentation Maintenance
 
