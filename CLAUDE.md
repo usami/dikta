@@ -56,6 +56,7 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - **ViolationKind**: `"scan_strategy" | "max_rows" | "row_filter" | "max_joins" | "validation_error" | "performance_conflict"`
 - **DatabaseTarget**: `"postgresql" | "mysql" | "sqlite"`
 - **OpenAPIFormat**: `"json" | "yaml" | "both"`
+- **MigrationEntryStatus**: `"applied" | "pending"`
 
 ## File Organization
 
@@ -79,8 +80,8 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - `src/file.ts` — header comment, naming utils (toSnakeCase, toPascalCase, toCamelCase)
 - `src/manifest.ts` — SHA-256 hashing, manifest.json generation
 - `src/generator.ts` — orchestrator: composes target modules via `createGenerator(target)` dispatch
-- `src/config.ts` — DiktaConfig type + config file discovery
-- `src/cli.ts` — commander CLI (generate, verify, context commands)
+- `src/config.ts` — DiktaConfig type, MigrationCliConfig, MigrationCliExecutor + config file discovery
+- `src/cli.ts` — commander CLI (generate, verify, context, migrate up/down/status commands)
 - `src/schema.ts` — Zod schema generation (fieldKindToZod, generateEntitySchema, generateSchemas) — DB-agnostic
 - `src/openapi/`
   - `schema.ts` — OpenAPI 3.1 JSON Schema generation (fieldToJsonSchema, entityToJsonSchema, generateOpenAPISchemas) — DB-agnostic
@@ -128,18 +129,20 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 
 ### packages/migration
 
-- `src/types.ts` — SchemaChange (discriminated union), FieldSpec, MigrationDialect interface, Safety/Impact/Migration types
+- `src/types.ts` — SchemaChange (discriminated union), FieldSpec, MigrationDialect interface, Safety/Impact/Migration types, MigrationExecutor, MigrationChainConfig, MigrationEntry, MigrationResult, DiscoveredMigration, MigrationStatusSummary
 - `src/definition.ts` — defineMigration API, change builders (addEntity, removeField, etc.), fieldDefinitionToSpec
 - `src/planner.ts` — planMigration: schema diff engine comparing two EntityRegistry instances (populates currentKind/currentRole)
 - `src/safety.ts` — evaluateSafety: target-aware risk evaluation per change kind (PG/MySQL/SQLite-specific notes)
 - `src/impact.ts` — analyzeImpact: query contract impact analysis (breaking/compatible/informational)
 - `src/sql-generator.ts` — generateMigrationFiles/Directory: up.sql, down.sql, verify.sql, metadata.json (target-aware via MigrationDialect)
+- `src/chain.ts` — discoverMigrations, resolveMigrationStatus, migrateUp, migrateDown, getMigrationStatus, computeChecksum — sequential migration execution and state tracking
+- `src/chain-dialect.ts` — ChainDialect interface + createChainDialect factory — tracking table DDL per target (pg/mysql/sqlite)
 - `src/dialects/postgresql.ts` — PostgreSQL MigrationDialect: double-quote identifiers, CASCADE on DROP, ALTER COLUMN, CHECK constraints
 - `src/dialects/mysql.ts` — MySQL MigrationDialect: backtick identifiers, MODIFY COLUMN, native ENUM, ENGINE=InnoDB, DROP FOREIGN KEY
 - `src/dialects/sqlite.ts` — SQLite MigrationDialect: double-quote identifiers, table rebuild comments for unsupported ALTER TABLE ops, sqlite_master/pragma_table_info verification
 - `src/dialects/factory.ts` — `createMigrationDialect(target)` dispatch
 - `src/index.ts` — public API barrel
-- `__tests__/` — definition, planner, safety, impact, sql-generator, integration, mysql-sql-generator, mysql-safety, sqlite-sql-generator, sqlite-safety
+- `__tests__/` — definition, planner, safety, impact, sql-generator, integration, mysql-sql-generator, mysql-safety, sqlite-sql-generator, sqlite-safety, chain-dialect, chain, chain-integration
 
 ## Documentation Maintenance
 
