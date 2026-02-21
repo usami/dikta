@@ -65,10 +65,10 @@ Generate OpenAPI 3.1 spec from entity + query contracts. This is the first "API 
 
 ### Phase 3 — Spec Assembly and Output
 
-- [ ] `spec.ts` — Assemble full OpenAPI 3.1 document (info, servers, paths, components)
-- [ ] Standard error response schemas (400, 404, 500)
-- [ ] CLI integration (`--openapi` flag) and `generateAll()` wiring
-- [ ] YAML and JSON output format support
+- [x] `spec.ts` — Assemble full OpenAPI 3.1 document (info, servers, paths, components)
+- [x] Standard error response schemas (400, 404, 500)
+- [x] CLI integration (`--openapi` flag) and `generateAll()` wiring
+- [x] YAML and JSON output format support
 
 ---
 

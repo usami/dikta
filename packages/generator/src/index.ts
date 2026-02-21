@@ -10,6 +10,8 @@ export { generateSchemas, generateEntitySchema, fieldKindToZod } from "./schema.
 // OpenAPI
 export { generateOpenAPISchemas, entityToJsonSchema, fieldToJsonSchema } from "./openapi/index.js";
 export { generateOpenAPIPaths, queryToPathItem, paramKindToJsonSchema, shapeFieldToJsonSchema } from "./openapi/index.js";
+export { generateOpenAPISpec, assembleOpenAPISpec, toYAML } from "./openapi/index.js";
+export type { OpenAPIConfig, OpenAPIFormat, OpenAPIServerConfig, OpenAPIContactConfig, OpenAPILicenseConfig } from "./openapi/index.js";
 
 // Manifest
 export { generateManifest } from "./manifest.js";

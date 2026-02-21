@@ -5,6 +5,8 @@ import { dirname, join } from "node:path";
 import { Command } from "commander";
 import { loadConfig } from "./config.js";
 import { generateAll, createGenerator } from "./generator.js";
+import { generateOpenAPISpec } from "./openapi/index.js";
+import type { OpenAPIConfig, OpenAPIFormat } from "./openapi/index.js";
 import {
   generateAgentContext,
   serializeAgentContext,
@@ -35,6 +37,8 @@ program
   .option("--validators", "Generate only validator files")
   .option("--tests", "Generate only contract test files")
   .option("--schemas", "Generate only Zod validation schema files")
+  .option("--openapi", "Generate only OpenAPI 3.1 specification")
+  .option("--openapi-format <format>", "OpenAPI output format: json (default), yaml, or both")
   .option("-o, --output <dir>", "Output directory", ".generated")
   .option("-c, --config <path>", "Path to dikta config file")
   .action(async (opts: {
@@ -43,13 +47,21 @@ program
     validators?: boolean;
     tests?: boolean;
     schemas?: boolean;
+    openapi?: boolean;
+    openapiFormat?: string;
     output: string;
     config?: string;
   }) => {
     try {
       const config = await loadConfig(opts.config);
       const generator = createGenerator(config.target);
-      const selective = opts.ddl || opts.access || opts.validators || opts.tests || opts.schemas;
+      const selective = opts.ddl || opts.access || opts.validators || opts.tests || opts.schemas || opts.openapi;
+
+      // Merge CLI format override with config
+      const openapiConfig: OpenAPIConfig = {
+        ...config.openapi,
+        ...(opts.openapiFormat ? { format: opts.openapiFormat as OpenAPIFormat } : {}),
+      };
 
       let files: readonly GeneratedFile[];
 
@@ -72,9 +84,14 @@ program
         if (opts.schemas) {
           parts.push(...generator.generateSchemas(config.schema));
         }
+        if (opts.openapi) {
+          parts.push(
+            ...generateOpenAPISpec(config.schema, config.queries, openapiConfig),
+          );
+        }
         files = parts;
       } else {
-        files = generateAll(config.schema, config.queries, config.target);
+        files = generateAll(config.schema, config.queries, config.target, openapiConfig);
       }
 
       writeFiles(files, opts.output);

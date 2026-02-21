@@ -14,7 +14,8 @@ import { generateValidators as generateSQLiteValidators } from "./targets/sqlite
 import { generateContractTests as generateSQLiteContractTests } from "./targets/sqlite/test.js";
 import { generateManifest } from "./manifest.js";
 import { generateSchemas } from "./schema.js";
-import { generateOpenAPISchemas, generateOpenAPIPaths } from "./openapi/index.js";
+import { generateOpenAPISchemas, generateOpenAPIPaths, generateOpenAPISpec } from "./openapi/index.js";
+import type { OpenAPIConfig } from "./openapi/index.js";
 
 export function createPostgreSQLGenerator(): CodeGenerator {
   return Object.freeze({
@@ -136,6 +137,7 @@ export function generateAll(
   schema: EntityRegistry,
   queries: QueryRegistry,
   target: DatabaseTarget = "postgresql",
+  openapi?: OpenAPIConfig,
 ): readonly GeneratedFile[] {
   // Validate contracts before generating
   const errors = queries.validate();
@@ -158,6 +160,7 @@ export function generateAll(
   const schemaFiles = generator.generateSchemas(schema);
   const openAPIFiles = generator.generateOpenAPI(schema);
   const openAPIPathFiles = generator.generateOpenAPIPaths(schema, queries);
+  const openAPISpecFiles = generateOpenAPISpec(schema, queries, openapi);
 
   const allFiles = [
     ...ddlFiles,
@@ -167,6 +170,7 @@ export function generateAll(
     ...schemaFiles,
     ...openAPIFiles,
     ...openAPIPathFiles,
+    ...openAPISpecFiles,
   ];
 
   const manifest = generateManifest(schema, queries, allFiles);

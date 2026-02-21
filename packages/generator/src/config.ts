@@ -1,6 +1,7 @@
 import type { EntityRegistry, QueryRegistry } from "@dikta/core";
 import type { AgentProtocolConfig } from "@dikta/agent-protocol";
 import type { DatabaseTarget } from "./types.js";
+import type { OpenAPIConfig } from "./openapi/index.js";
 
 export interface DiktaConfig {
   readonly schema: EntityRegistry;
@@ -8,6 +9,7 @@ export interface DiktaConfig {
   readonly output?: string;
   readonly target?: DatabaseTarget;
   readonly agentProtocol?: AgentProtocolConfig;
+  readonly openapi?: OpenAPIConfig;
 }
 
 const CONFIG_FILE_NAMES = [
