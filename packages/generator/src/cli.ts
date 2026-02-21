@@ -9,7 +9,7 @@ import { generateOpenAPISpec } from "./openapi/index.js";
 import type { OpenAPIConfig, OpenAPIFormat } from "./openapi/index.js";
 import { generateERDiagramFile } from "./diagram.js";
 import { generateSeedDataFile } from "./seed.js";
-import { generateGraphQLTypes } from "./graphql/index.js";
+import { generateGraphQLTypes, generateGraphQLOperations, generateGraphQLResolvers } from "./graphql/index.js";
 import {
   generateAgentContext,
   serializeAgentContext,
@@ -44,7 +44,7 @@ program
   .option("--openapi-format <format>", "OpenAPI output format: json (default), yaml, or both")
   .option("--diagram", "Generate only Mermaid ER diagram")
   .option("--seed", "Generate only faker-based seed data")
-  .option("--graphql", "Generate only GraphQL SDL type definitions")
+  .option("--graphql", "Generate GraphQL SDL types, operations, and resolver stubs")
   .option("-o, --output <dir>", "Output directory", ".generated")
   .option("-c, --config <path>", "Path to dikta config file")
   .action(async (opts: {
@@ -106,6 +106,8 @@ program
         }
         if (opts.graphql) {
           parts.push(...generateGraphQLTypes(config.schema));
+          parts.push(...generateGraphQLOperations(config.schema, config.queries));
+          parts.push(...generateGraphQLResolvers(config.schema, config.queries));
         }
         files = parts;
       } else {

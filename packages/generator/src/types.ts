@@ -22,6 +22,7 @@ export interface CodeGenerator {
   generateSeedData(schema: EntityRegistry): readonly GeneratedFile[];
   generateGraphQL(schema: EntityRegistry): readonly GeneratedFile[];
   generateGraphQLOperations(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[];
+  generateGraphQLResolvers(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[];
 }
 
 // ── Dialect Abstraction Layer ────────────────────────────────

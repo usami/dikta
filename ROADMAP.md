@@ -96,10 +96,10 @@ Entity -> GraphQL Object Types, Query contracts -> Query/Mutation resolvers. Ref
 
 ### Phase 3 — Resolver Scaffolding
 
-- [ ] `resolvers.ts` — Generate resolver stubs with typed context
+- [x] `resolvers.ts` — Generate resolver stubs with typed context
   - Ref field -> nested resolver for relationship resolution
   - DataLoader pattern hints for N+1 prevention
-- [ ] CLI integration (`--graphql` flag) and `generateAll()` wiring
+- [x] CLI integration (`--graphql` flag) and `generateAll()` wiring
 
 ---
 
