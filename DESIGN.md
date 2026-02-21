@@ -156,6 +156,6 @@ Phase 1 is the foundation. Phase 3 is the most work. Phase 5 can start early and
 ## Non-Goals (for now)
 
 - **Runtime query builder** — Dikta is not an ORM. No `.where().join().select()`.
-- **Multi-database support** — PostgreSQL first. Others later if there's demand.
+- **Multi-database support** — PostgreSQL first. MySQL target in progress via `SQLDialect` abstraction layer (see ROADMAP.md).
 - **GUI / dashboard** — CLI and file-based workflows only.
 - **Schema migration execution** — Dikta generates migration SQL but does not run it. Use existing tools (dbmate, flyway, etc.) for execution.

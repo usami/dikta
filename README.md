@@ -139,10 +139,14 @@ npx dikta context
 Or use the programmatic API:
 
 ```typescript
-import { generateAll, createPostgreSQLGenerator } from "@dikta/generator";
+import { generateAll, createGenerator } from "@dikta/generator";
 
-const files = generateAll(schema, queries);
-// files: GeneratedFile[] with path, content, purpose, regeneratable
+// Target-aware generation (defaults to "postgresql")
+const files = generateAll(schema, queries, "postgresql");
+
+// Or create a generator instance directly
+const generator = createGenerator("postgresql");
+const ddl = generator.generateDDL(schema);
 ```
 
 ## Key Design Decisions
@@ -198,6 +202,7 @@ Dikta is in early development. The current implementation covers:
 | 3 | Code generation (CLI, DDL, access functions, validators) | Done |
 | 4 | Migration planner (schema diff, safe migration SQL) | Done |
 | 5 | Agent protocol (agent-context.json, violation reporter) | Done |
+| 6 | Multi-database support — dialect abstraction layer | In progress |
 
 ## Development
 

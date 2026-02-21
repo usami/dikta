@@ -8,16 +8,18 @@ Dikta is a schema-first code generation monorepo with 4 packages: core, generato
 
 ## Priority 1: MySQL Target Support
 
-### Phase 1 — Dialect Abstraction Layer
+### Phase 1 — Dialect Abstraction Layer ✅
 
-- Define `SQLDialect` interface (type mapping, identifier quoting, placeholder style)
-- Extract PostgreSQL-specific logic into a concrete `PostgreSQLDialect`
-- Enable `DiktaConfig.target` dispatch in CLI (`cli.ts`)
-- Files to modify:
-  - `packages/generator/src/types.ts` — add dialect interface
-  - `packages/generator/src/generator.ts` — dispatch by target
-  - `packages/generator/src/cli.ts` — use config target
-  - `packages/generator/src/targets/postgresql/` — refactor to implement dialect
+- [x] Define `SQLDialect` interface (type mapping, identifier quoting, placeholder style)
+- [x] Extract PostgreSQL-specific logic into a concrete `PostgreSQLDialect`
+- [x] Enable `DiktaConfig.target` dispatch in CLI (`cli.ts`)
+- [x] Add `createGenerator(target)` factory with target-aware dispatch
+- [x] Export `DatabaseTarget`, `SQLDialect` types from public API
+- Files modified:
+  - `packages/generator/src/types.ts` — `DatabaseTarget` type, `SQLDialect` interface
+  - `packages/generator/src/generator.ts` — `createGenerator(target)` dispatch
+  - `packages/generator/src/cli.ts` — reads `config.target`
+  - `packages/generator/src/targets/postgresql/dialect.ts` — `PostgreSQLDialect` implementation
 
 ### Phase 2 — MySQL Generator
 

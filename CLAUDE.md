@@ -54,6 +54,7 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - **SchemaChange kind**: `"add_entity" | "remove_entity" | "rename_entity" | "add_field" | "remove_field" | "rename_field" | "alter_field" | "add_invariant" | "remove_invariant"`
 - **TaskKind**: `"implement_query" | "add_entity" | "modify_schema" | "fix_contract_violation"`
 - **ViolationKind**: `"scan_strategy" | "max_rows" | "row_filter" | "max_joins" | "validation_error" | "performance_conflict"`
+- **DatabaseTarget**: `"postgresql" | "mysql"`
 
 ## File Organization
 
@@ -73,15 +74,16 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 
 ### packages/generator
 
-- `src/types.ts` — GeneratedFile, CodeGenerator interface
+- `src/types.ts` — GeneratedFile, CodeGenerator interface, DatabaseTarget, SQLDialect
 - `src/file.ts` — header comment, naming utils (toSnakeCase, toPascalCase, toCamelCase)
 - `src/manifest.ts` — SHA-256 hashing, manifest.json generation
-- `src/generator.ts` — orchestrator: composes PostgreSQL target modules
+- `src/generator.ts` — orchestrator: composes target modules via `createGenerator(target)` dispatch
 - `src/config.ts` — DiktaConfig type + config file discovery
 - `src/cli.ts` — commander CLI (generate, verify, context commands)
 - `src/index.ts` — public API barrel
 - `src/targets/postgresql/`
   - `types.ts` — FieldKind->PG type, ParamKind->TS type, CascadeRule->PG mapping
+  - `dialect.ts` — PostgreSQLDialect implementing SQLDialect interface
   - `topo-sort.ts` — Kahn's algorithm for FK dependency ordering
   - `ddl.ts` — CREATE TABLE, INDEX, COMMENT generation
   - `access.ts` — typed query functions (postgres.js sql tagged template)
