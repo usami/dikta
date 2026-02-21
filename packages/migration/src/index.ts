@@ -31,6 +31,19 @@ export { createPostgreSQLMigrationDialect } from "./dialects/postgresql.js";
 export { createMySQLMigrationDialect } from "./dialects/mysql.js";
 export { createSQLiteMigrationDialect } from "./dialects/sqlite.js";
 
+// Chain (migration execution)
+export {
+  discoverMigrations,
+  resolveMigrationStatus,
+  migrateUp,
+  migrateDown,
+  getMigrationStatus,
+  computeChecksum,
+} from "./chain.js";
+
+export { createChainDialect } from "./chain-dialect.js";
+export type { ChainDialect } from "./chain-dialect.js";
+
 // Types
 export type {
   SchemaChange,
@@ -59,4 +72,15 @@ export type {
   MigrationMetadata,
   MigrationPlan,
   MigrationDialect,
+  MigrationExecutor,
+  MigrationRecord,
+  MigrationEntryStatus,
+  MigrationEntry,
+  MigrationResult,
+  MigrationError,
+  MigrationChainConfig,
+  DiscoveredMigration,
+  MigrationStatusSummary,
+  MigrateUpOptions,
+  MigrateDownOptions,
 } from "./types.js";

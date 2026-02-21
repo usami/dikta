@@ -12,6 +12,7 @@ Dikta is a schema-first code generation monorepo with 4 packages: core, generato
 - **OpenAPI Specification Generation** — entity schemas, query path operations, spec assembly (all 3 phases)
 - **ER Diagram Generation** — Mermaid ER diagram from entity registry + CLI integration
 - **Seed Data Generator** — Faker-based test data generation with topological ordering + CLI integration
+- **Multi-Version Migration Chain** — Sequential migration discovery, execution (up/down), state tracking, CLI integration
 
 ---
 
@@ -124,8 +125,9 @@ Independent generators that consume EntityRegistry for non-database purposes.
 
 ### Phase 3 — Multi-Version Migration Chain
 
-- [ ] `packages/migration/src/chain.ts` — Sequential migration application
+- [x] `packages/migration/src/chain.ts` — Sequential migration application
   - Ordered migration discovery and dependency validation
   - Forward (up.sql) and backward (down.sql) execution
   - Migration state tracking (applied versions table)
-- [ ] CLI integration for `migrate up`, `migrate down`, `migrate status`
+- [x] `packages/migration/src/chain-dialect.ts` — Tracking table DDL per target (pg/mysql/sqlite)
+- [x] CLI integration for `migrate up`, `migrate down`, `migrate status`

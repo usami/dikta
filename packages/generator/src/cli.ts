@@ -1,9 +1,17 @@
 #!/usr/bin/env node
 
 import { writeFileSync, mkdirSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { Command } from "commander";
 import { loadConfig } from "./config.js";
+
+// Dynamic import helper for @dikta/migration (avoids circular package dependency).
+// Variable indirection prevents TypeScript from statically resolving the module.
+const MIGRATION_PKG = "@dikta/migration";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function loadMigrationPkg(): Promise<any> {
+  return import(MIGRATION_PKG);
+}
 import { generateAll, createGenerator } from "./generator.js";
 import { generateOpenAPISpec } from "./openapi/index.js";
 import type { OpenAPIConfig, OpenAPIFormat } from "./openapi/index.js";
@@ -201,6 +209,168 @@ program
       console.error(
         `Error: ${error instanceof Error ? error.message : String(error)}`,
       );
+      process.exit(1);
+    }
+  });
+
+// ── Migrate command group ───────────────────────────────────
+
+const migrate = program
+  .command("migrate")
+  .description("Run database migrations (up, down, status)");
+
+migrate
+  .command("up")
+  .description("Apply pending migrations")
+  .option("--target <version>", "Apply up to this version (inclusive)")
+  .option("--count <n>", "Maximum number of migrations to apply")
+  .option("--migrations-dir <dir>", "Migrations directory")
+  .option("-c, --config <path>", "Path to dikta config file")
+  .action(async (opts: {
+    target?: string;
+    count?: string;
+    migrationsDir?: string;
+    config?: string;
+  }) => {
+    try {
+      const config = await loadConfig(opts.config);
+      const executor = config.migration?.executor;
+      if (!executor) {
+        console.error("Error: migration.executor is required in dikta config for migrate commands");
+        process.exit(1);
+      }
+
+      const { migrateUp } = await loadMigrationPkg();
+
+      const chainConfig = {
+        migrationsDir: resolve(opts.migrationsDir ?? config.migration?.migrationsDir ?? "migrations"),
+        target: config.target ?? "postgresql" as const,
+        tableName: config.migration?.tableName,
+      };
+
+      const result = await migrateUp(executor, chainConfig, {
+        target: opts.target,
+        count: opts.count ? parseInt(opts.count, 10) : undefined,
+      });
+
+      if (result.applied.length > 0) {
+        for (const m of result.applied) {
+          console.log(`  Applied: ${m.version} ${m.name}`);
+        }
+        console.log(`\n${result.applied.length} migration(s) applied.`);
+      } else {
+        console.log("No pending migrations.");
+      }
+
+      if (result.errors.length > 0) {
+        for (const e of result.errors) {
+          console.error(`  Error: ${e.version} ${e.name} — ${e.message}`);
+        }
+        process.exit(1);
+      }
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+  });
+
+migrate
+  .command("down")
+  .description("Roll back applied migrations")
+  .option("--target <version>", "Roll back to this version (stays applied)")
+  .option("--count <n>", "Number of migrations to roll back (default: 1)")
+  .option("--migrations-dir <dir>", "Migrations directory")
+  .option("-c, --config <path>", "Path to dikta config file")
+  .action(async (opts: {
+    target?: string;
+    count?: string;
+    migrationsDir?: string;
+    config?: string;
+  }) => {
+    try {
+      const config = await loadConfig(opts.config);
+      const executor = config.migration?.executor;
+      if (!executor) {
+        console.error("Error: migration.executor is required in dikta config for migrate commands");
+        process.exit(1);
+      }
+
+      const { migrateDown } = await loadMigrationPkg();
+
+      const chainConfig = {
+        migrationsDir: resolve(opts.migrationsDir ?? config.migration?.migrationsDir ?? "migrations"),
+        target: config.target ?? "postgresql" as const,
+        tableName: config.migration?.tableName,
+      };
+
+      const result = await migrateDown(executor, chainConfig, {
+        target: opts.target,
+        count: opts.count ? parseInt(opts.count, 10) : undefined,
+      });
+
+      if (result.applied.length > 0) {
+        for (const m of result.applied) {
+          console.log(`  Rolled back: ${m.version} ${m.name}`);
+        }
+        console.log(`\n${result.applied.length} migration(s) rolled back.`);
+      } else {
+        console.log("No migrations to roll back.");
+      }
+
+      if (result.errors.length > 0) {
+        for (const e of result.errors) {
+          console.error(`  Error: ${e.version} ${e.name} — ${e.message}`);
+        }
+        process.exit(1);
+      }
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+  });
+
+migrate
+  .command("status")
+  .description("Show migration status")
+  .option("--migrations-dir <dir>", "Migrations directory")
+  .option("-c, --config <path>", "Path to dikta config file")
+  .action(async (opts: {
+    migrationsDir?: string;
+    config?: string;
+  }) => {
+    try {
+      const config = await loadConfig(opts.config);
+      const executor = config.migration?.executor;
+      if (!executor) {
+        console.error("Error: migration.executor is required in dikta config for migrate commands");
+        process.exit(1);
+      }
+
+      const { getMigrationStatus } = await loadMigrationPkg();
+
+      const chainConfig = {
+        migrationsDir: resolve(opts.migrationsDir ?? config.migration?.migrationsDir ?? "migrations"),
+        target: config.target ?? "postgresql" as const,
+        tableName: config.migration?.tableName,
+      };
+
+      const status = await getMigrationStatus(executor, chainConfig);
+
+      if (status.total === 0) {
+        console.log("No migrations found.");
+        return;
+      }
+
+      console.log(`Migrations: ${status.applied} applied, ${status.pending} pending, ${status.total} total\n`);
+
+      for (const entry of status.entries) {
+        const marker = entry.status === "applied" ? "[x]" : "[ ]";
+        const mismatch = entry.checksumMismatch ? " (checksum mismatch!)" : "";
+        const appliedAt = entry.appliedAt ? ` (${entry.appliedAt})` : "";
+        console.log(`  ${marker} ${entry.version} ${entry.name}${appliedAt}${mismatch}`);
+      }
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
       process.exit(1);
     }
   });
