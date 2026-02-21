@@ -13,6 +13,7 @@ Dikta is a schema-first code generation monorepo with 4 packages: core, generato
 - **ER Diagram Generation** — Mermaid ER diagram from entity registry + CLI integration
 - **Seed Data Generator** — Faker-based test data generation with topological ordering + CLI integration
 - **Multi-Version Migration Chain** — Sequential migration discovery, execution (up/down), state tracking, CLI integration
+- **GraphQL Schema Generation** — SDL type definitions, query/mutation operations, CLI integration
 
 ---
 
@@ -79,7 +80,7 @@ Generate OpenAPI 3.1 spec from entity + query contracts. This is the first "API 
 
 ## Priority 3: GraphQL Schema Generation
 
-Entity -> GraphQL Object Types, Query contracts -> Query/Mutation resolvers. Ref fields enable automatic relationship resolution.
+Entity -> GraphQL Object Types, Query contracts -> Query/Mutation operations. SDL-only generation — no runtime resolver scaffolding.
 
 ### Phase 1 — Type Definitions
 
@@ -95,12 +96,10 @@ Entity -> GraphQL Object Types, Query contracts -> Query/Mutation resolvers. Ref
   - Map ShapeKind result to return types
   - Generate connection types for paginated queries (cursor/offset patterns)
 
-### Phase 3 — Resolver Scaffolding
+### Phase 3 — CLI Integration and Generation Wiring
 
-- [ ] `resolvers.ts` — Generate resolver stubs with typed context
-  - Ref field -> nested resolver for relationship resolution
-  - DataLoader pattern hints for N+1 prevention
-- [ ] CLI integration (`--graphql` flag) and `generateAll()` wiring
+- [x] CLI integration (`--graphql` flag) and `generateAll()` wiring
+- [x] Export GraphQL types and operations from public API
 
 ---
 
