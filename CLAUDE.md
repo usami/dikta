@@ -66,13 +66,16 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - `src/entity.ts` — defineEntity + type inference
 - `src/registry.ts` — runtime entity collection
 - `src/serialize.ts` — JSON round-trip
+- `src/types.ts` — re-exports of all public types (FieldPolicy, Invariant, FieldKind, FieldRole, etc.)
+- `src/invariant.ts` — Invariant type definition (business rule string)
+- `src/policy.ts` — FieldPolicy interface (pii, retention, external_exposure, access)
 - `src/query/` — query contract system
   - `types.ts` — ParamKind, ShapeKind, QueryContractConfig, InferParams/InferResult
   - `contract.ts` — defineQuery + const generics
   - `registry.ts` — createQueryRegistry + validation against entity schema
   - `verifier.ts` — skeleton SQL verification (LIMIT, WHERE, scan strategy)
-- `__tests__/` — vitest tests
-  - `__tests__/query/` — contract, type-inference, registry, verifier
+- `__tests__/` — entity, fields, registry, serialize, type-inference
+  - `query/` — contract, type-inference, registry, verifier
 
 ### packages/generator
 
