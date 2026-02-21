@@ -78,10 +78,10 @@ Entity -> GraphQL Object Types, Query contracts -> Query/Mutation resolvers. Ref
 
 ### Phase 1 — Type Definitions
 
-- [ ] Create `packages/generator/src/graphql/`
+- [x] Create `packages/generator/src/graphql/`
   - `types.ts` — Entity -> GraphQL Object Type (FieldKind -> GraphQL scalar mapping)
   - Handle nullable (`String` vs `String!`), enum (GraphQL enum type), ref (object type reference)
-- [ ] Wire into `CodeGenerator` interface as `generateGraphQL()` method
+- [x] Wire into `CodeGenerator` interface as `generateGraphQL()` method
 
 ### Phase 2 — Query and Mutation Types
 

@@ -82,6 +82,9 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - `src/config.ts` — DiktaConfig type + config file discovery
 - `src/cli.ts` — commander CLI (generate, verify, context commands)
 - `src/schema.ts` — Zod schema generation (fieldKindToZod, generateEntitySchema, generateSchemas) — DB-agnostic
+- `src/graphql/`
+  - `types.ts` — GraphQL SDL type generation (fieldKindToGraphQL mapping, entityToGraphQLType, collectEnumTypes, toGraphQLEnumValue, generateGraphQLSchema, generateGraphQLTypes) — DB-agnostic
+  - `index.ts` — barrel re-export
 - `src/openapi/`
   - `schema.ts` — OpenAPI 3.1 JSON Schema generation (fieldToJsonSchema, entityToJsonSchema, generateOpenAPISchemas) — DB-agnostic
   - `paths.ts` — OpenAPI 3.1 path operations from query contracts (paramKindToJsonSchema, shapeFieldToJsonSchema, queryToPathItem, generateOpenAPIPaths) — DB-agnostic
@@ -114,7 +117,7 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
   - `access.ts` — typed query functions (better-sqlite3 Database, synchronous API, db.prepare().all())
   - `validator.ts` — re-exports from postgresql (DB-agnostic)
   - `test.ts` — re-exports from postgresql (DB-agnostic)
-- `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator, dialect, mysql-dialect, mysql-ddl, mysql-access, sqlite-dialect, sqlite-ddl, sqlite-access, sqlite-integration, schema, openapi-schema, openapi-paths, openapi-spec, diagram, seed
+- `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator, dialect, mysql-dialect, mysql-ddl, mysql-access, sqlite-dialect, sqlite-ddl, sqlite-access, sqlite-integration, schema, openapi-schema, openapi-paths, openapi-spec, diagram, seed, graphql-types
 
 ### packages/agent-protocol
 
