@@ -21,15 +21,24 @@ Dikta is a schema-first code generation monorepo with 4 packages: core, generato
   - `packages/generator/src/cli.ts` — reads `config.target`
   - `packages/generator/src/targets/postgresql/dialect.ts` — `PostgreSQLDialect` implementation
 
-### Phase 2 — MySQL Generator
+### Phase 2 — MySQL Generator ✅
 
-- Create `packages/generator/src/targets/mysql/`
+- [x] Create `packages/generator/src/targets/mysql/`
   - `types.ts` — FieldKind to MySQL type mapping (UUID->CHAR(36), TIMESTAMPTZ->DATETIME, etc.)
-  - `ddl.ts` — backtick quoting, ENGINE=InnoDB, native ENUM() type
-  - `access.ts` — mysql2/promise driver, `?` placeholder style
-  - `validator.ts` — invariant pattern matching for MySQL
-  - `test.ts` — contract test generation for MySQL
-  - `topo-sort.ts` — reuse from PostgreSQL (FK ordering is DB-agnostic)
+  - `ddl.ts` — backtick quoting, ENGINE=InnoDB, native ENUM() type, CONSTRAINT FOREIGN KEY, inline COMMENT
+  - `access.ts` — mysql2/promise driver, `?` placeholder style, `pool.execute()` pattern
+  - `validator.ts` — reuses PostgreSQL (invariant validation is DB-agnostic)
+  - `test.ts` — reuses PostgreSQL (contract test generation is DB-agnostic)
+  - `topo-sort.ts` — reuses PostgreSQL (FK ordering is DB-agnostic)
+  - `dialect.ts` — `MySQLDialect` implementing `SQLDialect` interface
+- [x] Wire `createMySQLGenerator()` into `createGenerator("mysql")` dispatch
+- [x] Fix `generateAll()` to route DDL through the generator (was hardcoded to PostgreSQL)
+- [x] Export MySQL types, dialect, and generator from public API
+- Files modified:
+  - `packages/generator/src/targets/mysql/` — all 7 files listed above
+  - `packages/generator/src/generator.ts` — `createMySQLGenerator()` + dispatch + `generateAll()` fix
+  - `packages/generator/src/types.ts` — `CodeGenerator.generateDDL()` accepts optional `queries`
+  - `packages/generator/src/index.ts` — export MySQL public API
 
 ### Phase 3 — MySQL Migration
 

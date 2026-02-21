@@ -89,7 +89,15 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
   - `access.ts` — typed query functions (postgres.js sql tagged template)
   - `validator.ts` — invariant pattern matching -> check functions
   - `test.ts` — contract test file generation
-- `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator
+- `src/targets/mysql/`
+  - `types.ts` — FieldKind->MySQL type, ParamKind->TS type, CascadeRule->MySQL mapping
+  - `dialect.ts` — MySQLDialect implementing SQLDialect interface
+  - `topo-sort.ts` — re-exports from postgresql (DB-agnostic)
+  - `ddl.ts` — CREATE TABLE with backtick quoting, ENGINE=InnoDB, native ENUM(), CONSTRAINT FOREIGN KEY, inline COMMENT
+  - `access.ts` — typed query functions (mysql2/promise Pool, `?` placeholders, pool.execute())
+  - `validator.ts` — re-exports from postgresql (DB-agnostic)
+  - `test.ts` — re-exports from postgresql (DB-agnostic)
+- `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator, dialect, mysql-dialect, mysql-ddl, mysql-access
 
 ### packages/agent-protocol
 
