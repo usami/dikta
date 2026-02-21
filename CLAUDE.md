@@ -84,6 +84,7 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - `src/schema.ts` — Zod schema generation (fieldKindToZod, generateEntitySchema, generateSchemas) — DB-agnostic
 - `src/graphql/`
   - `types.ts` — GraphQL SDL type generation (fieldKindToGraphQL mapping, entityToGraphQLType, collectEnumTypes, toGraphQLEnumValue, generateGraphQLSchema, generateGraphQLTypes) — DB-agnostic
+  - `operations.ts` — GraphQL SDL query operations from query contracts (paramKindToGraphQL, shapeFieldToGraphQL, generateResultType, generateConnectionTypes, generatePageType, queryToGraphQLField, generateGraphQLOperationsSchema, generateGraphQLOperations) — DB-agnostic
   - `index.ts` — barrel re-export
 - `src/openapi/`
   - `schema.ts` — OpenAPI 3.1 JSON Schema generation (fieldToJsonSchema, entityToJsonSchema, generateOpenAPISchemas) — DB-agnostic
@@ -117,7 +118,7 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
   - `access.ts` — typed query functions (better-sqlite3 Database, synchronous API, db.prepare().all())
   - `validator.ts` — re-exports from postgresql (DB-agnostic)
   - `test.ts` — re-exports from postgresql (DB-agnostic)
-- `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator, dialect, mysql-dialect, mysql-ddl, mysql-access, sqlite-dialect, sqlite-ddl, sqlite-access, sqlite-integration, schema, openapi-schema, openapi-paths, openapi-spec, diagram, seed, graphql-types
+- `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator, dialect, mysql-dialect, mysql-ddl, mysql-access, sqlite-dialect, sqlite-ddl, sqlite-access, sqlite-integration, schema, openapi-schema, openapi-paths, openapi-spec, diagram, seed, graphql-types, graphql-operations
 
 ### packages/agent-protocol
 

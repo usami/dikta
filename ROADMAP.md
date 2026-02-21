@@ -89,7 +89,7 @@ Entity -> GraphQL Object Types, Query contracts -> Query/Mutation resolvers. Ref
 
 ### Phase 2 — Query and Mutation Types
 
-- [ ] `operations.ts` — QueryContract -> Query/Mutation field definitions
+- [x] `operations.ts` — QueryContract -> Query/Mutation field definitions
   - Map ParamKind to GraphQL input types / arguments
   - Map ShapeKind result to return types
   - Generate connection types for paginated queries (cursor/offset patterns)
