@@ -122,6 +122,7 @@ npx dikta generate --ddl
 npx dikta generate --access
 npx dikta generate --validators
 npx dikta generate --tests
+npx dikta generate --schemas
 
 # Custom output directory
 npx dikta generate --output ./src/generated
