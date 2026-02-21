@@ -4,6 +4,25 @@ import type { DatabaseTarget } from "./types.js";
 import type { OpenAPIConfig } from "./openapi/index.js";
 import type { SeedConfig } from "./seed.js";
 
+/**
+ * Driver-agnostic database executor for migration commands.
+ * Structurally compatible with MigrationExecutor from @dikta/migration
+ * (defined inline to avoid circular package dependency).
+ */
+export interface MigrationCliExecutor {
+  execute(sql: string): Promise<void>;
+  query<T>(sql: string): Promise<readonly T[]>;
+}
+
+export interface MigrationCliConfig {
+  /** Directory containing migration subdirectories (default: "migrations"). */
+  readonly migrationsDir?: string;
+  /** Name of the tracking table (default: "dikta_migrations"). */
+  readonly tableName?: string;
+  /** Database executor — required for migrate up/down/status commands. */
+  readonly executor?: MigrationCliExecutor;
+}
+
 export interface DiktaConfig {
   readonly schema: EntityRegistry;
   readonly queries: QueryRegistry;
@@ -12,6 +31,7 @@ export interface DiktaConfig {
   readonly agentProtocol?: AgentProtocolConfig;
   readonly openapi?: OpenAPIConfig;
   readonly seed?: SeedConfig;
+  readonly migration?: MigrationCliConfig;
 }
 
 const CONFIG_FILE_NAMES = [

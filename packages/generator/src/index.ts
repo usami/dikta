@@ -42,6 +42,6 @@ export { createSQLiteDialect } from "./targets/sqlite/dialect.js";
 
 // Types
 export type { GeneratedFile, CodeGenerator, DatabaseTarget, SQLDialect } from "./types.js";
-export type { DiktaConfig } from "./config.js";
+export type { DiktaConfig, MigrationCliConfig, MigrationCliExecutor } from "./config.js";
 export type { Manifest, ManifestEntry } from "./manifest.js";
 export type { AgentProtocolConfig } from "@dikta/agent-protocol";
