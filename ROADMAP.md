@@ -105,10 +105,10 @@ Independent generators that consume EntityRegistry for non-database purposes.
 
 ### Phase 1 — ER Diagram
 
-- [ ] `packages/generator/src/diagram.ts` — Mermaid ER diagram from entity registry
+- [x] `packages/generator/src/diagram.ts` — Mermaid ER diagram from entity registry
   - Entity -> table block, ref fields -> relationship arrows
-  - Cardinality notation from CascadeRule semantics
-- [ ] CLI integration (`--diagram` flag)
+  - Cardinality notation from nullable FK semantics
+- [x] CLI integration (`--diagram` flag)
 
 ### Phase 2 — Seed Data Generator
 

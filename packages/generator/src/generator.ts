@@ -16,6 +16,7 @@ import { generateManifest } from "./manifest.js";
 import { generateSchemas } from "./schema.js";
 import { generateOpenAPISchemas, generateOpenAPIPaths, generateOpenAPISpec } from "./openapi/index.js";
 import type { OpenAPIConfig } from "./openapi/index.js";
+import { generateERDiagramFile } from "./diagram.js";
 
 export function createPostgreSQLGenerator(): CodeGenerator {
   return Object.freeze({
@@ -48,6 +49,10 @@ export function createPostgreSQLGenerator(): CodeGenerator {
 
     generateOpenAPIPaths(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
       return generateOpenAPIPaths(schema, queries);
+    },
+
+    generateERDiagram(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateERDiagramFile(schema);
     },
   });
 }
@@ -84,6 +89,10 @@ export function createMySQLGenerator(): CodeGenerator {
     generateOpenAPIPaths(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
       return generateOpenAPIPaths(schema, queries);
     },
+
+    generateERDiagram(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateERDiagramFile(schema);
+    },
   });
 }
 
@@ -118,6 +127,10 @@ export function createSQLiteGenerator(): CodeGenerator {
 
     generateOpenAPIPaths(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
       return generateOpenAPIPaths(schema, queries);
+    },
+
+    generateERDiagram(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateERDiagramFile(schema);
     },
   });
 }
@@ -161,6 +174,7 @@ export function generateAll(
   const openAPIFiles = generator.generateOpenAPI(schema);
   const openAPIPathFiles = generator.generateOpenAPIPaths(schema, queries);
   const openAPISpecFiles = generateOpenAPISpec(schema, queries, openapi);
+  const diagramFiles = generator.generateERDiagram(schema);
 
   const allFiles = [
     ...ddlFiles,
@@ -171,6 +185,7 @@ export function generateAll(
     ...openAPIFiles,
     ...openAPIPathFiles,
     ...openAPISpecFiles,
+    ...diagramFiles,
   ];
 
   const manifest = generateManifest(schema, queries, allFiles);

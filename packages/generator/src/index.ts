@@ -13,6 +13,9 @@ export { generateOpenAPIPaths, queryToPathItem, paramKindToJsonSchema, shapeFiel
 export { generateOpenAPISpec, assembleOpenAPISpec, toYAML } from "./openapi/index.js";
 export type { OpenAPIConfig, OpenAPIFormat, OpenAPIServerConfig, OpenAPIContactConfig, OpenAPILicenseConfig } from "./openapi/index.js";
 
+// ER Diagram
+export { generateERDiagramFile, generateERDiagram, entityToBlock, fieldToAttribute, cascadeToRelationship } from "./diagram.js";
+
 // Manifest
 export { generateManifest } from "./manifest.js";
 

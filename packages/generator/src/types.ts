@@ -18,6 +18,7 @@ export interface CodeGenerator {
   generateSchemas(schema: EntityRegistry): readonly GeneratedFile[];
   generateOpenAPI(schema: EntityRegistry): readonly GeneratedFile[];
   generateOpenAPIPaths(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[];
+  generateERDiagram(schema: EntityRegistry): readonly GeneratedFile[];
 }
 
 // ── Dialect Abstraction Layer ────────────────────────────────

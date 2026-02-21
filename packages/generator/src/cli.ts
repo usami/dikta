@@ -7,6 +7,7 @@ import { loadConfig } from "./config.js";
 import { generateAll, createGenerator } from "./generator.js";
 import { generateOpenAPISpec } from "./openapi/index.js";
 import type { OpenAPIConfig, OpenAPIFormat } from "./openapi/index.js";
+import { generateERDiagramFile } from "./diagram.js";
 import {
   generateAgentContext,
   serializeAgentContext,
@@ -39,6 +40,7 @@ program
   .option("--schemas", "Generate only Zod validation schema files")
   .option("--openapi", "Generate only OpenAPI 3.1 specification")
   .option("--openapi-format <format>", "OpenAPI output format: json (default), yaml, or both")
+  .option("--diagram", "Generate only Mermaid ER diagram")
   .option("-o, --output <dir>", "Output directory", ".generated")
   .option("-c, --config <path>", "Path to dikta config file")
   .action(async (opts: {
@@ -49,13 +51,14 @@ program
     schemas?: boolean;
     openapi?: boolean;
     openapiFormat?: string;
+    diagram?: boolean;
     output: string;
     config?: string;
   }) => {
     try {
       const config = await loadConfig(opts.config);
       const generator = createGenerator(config.target);
-      const selective = opts.ddl || opts.access || opts.validators || opts.tests || opts.schemas || opts.openapi;
+      const selective = opts.ddl || opts.access || opts.validators || opts.tests || opts.schemas || opts.openapi || opts.diagram;
 
       // Merge CLI format override with config
       const openapiConfig: OpenAPIConfig = {
@@ -88,6 +91,9 @@ program
           parts.push(
             ...generateOpenAPISpec(config.schema, config.queries, openapiConfig),
           );
+        }
+        if (opts.diagram) {
+          parts.push(...generateERDiagramFile(config.schema));
         }
         files = parts;
       } else {
