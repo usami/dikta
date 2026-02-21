@@ -8,6 +8,7 @@ import { generateAll, createGenerator } from "./generator.js";
 import { generateOpenAPISpec } from "./openapi/index.js";
 import type { OpenAPIConfig, OpenAPIFormat } from "./openapi/index.js";
 import { generateERDiagramFile } from "./diagram.js";
+import { generateSeedDataFile } from "./seed.js";
 import {
   generateAgentContext,
   serializeAgentContext,
@@ -41,6 +42,7 @@ program
   .option("--openapi", "Generate only OpenAPI 3.1 specification")
   .option("--openapi-format <format>", "OpenAPI output format: json (default), yaml, or both")
   .option("--diagram", "Generate only Mermaid ER diagram")
+  .option("--seed", "Generate only faker-based seed data")
   .option("-o, --output <dir>", "Output directory", ".generated")
   .option("-c, --config <path>", "Path to dikta config file")
   .action(async (opts: {
@@ -52,13 +54,14 @@ program
     openapi?: boolean;
     openapiFormat?: string;
     diagram?: boolean;
+    seed?: boolean;
     output: string;
     config?: string;
   }) => {
     try {
       const config = await loadConfig(opts.config);
       const generator = createGenerator(config.target);
-      const selective = opts.ddl || opts.access || opts.validators || opts.tests || opts.schemas || opts.openapi || opts.diagram;
+      const selective = opts.ddl || opts.access || opts.validators || opts.tests || opts.schemas || opts.openapi || opts.diagram || opts.seed;
 
       // Merge CLI format override with config
       const openapiConfig: OpenAPIConfig = {
@@ -95,9 +98,12 @@ program
         if (opts.diagram) {
           parts.push(...generateERDiagramFile(config.schema));
         }
+        if (opts.seed) {
+          parts.push(...generateSeedDataFile(config.schema, config.seed));
+        }
         files = parts;
       } else {
-        files = generateAll(config.schema, config.queries, config.target, openapiConfig);
+        files = generateAll(config.schema, config.queries, config.target, openapiConfig, config.seed);
       }
 
       writeFiles(files, opts.output);

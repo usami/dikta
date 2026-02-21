@@ -16,6 +16,10 @@ export type { OpenAPIConfig, OpenAPIFormat, OpenAPIServerConfig, OpenAPIContactC
 // ER Diagram
 export { generateERDiagramFile, generateERDiagram, entityToBlock, fieldToAttribute, cascadeToRelationship } from "./diagram.js";
 
+// Seed Data
+export { generateSeedDataFile, generateSeedData, fieldRoleToFaker, fieldKindToFaker, fieldToFakerExpression, entityToSeedBlock } from "./seed.js";
+export type { SeedConfig } from "./seed.js";
+
 // Manifest
 export { generateManifest } from "./manifest.js";
 

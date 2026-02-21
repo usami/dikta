@@ -88,6 +88,7 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
   - `spec.ts` — Full OpenAPI 3.1 spec assembly (assembleOpenAPISpec, generateOpenAPISpec, toYAML), standard error schemas (400/404/500), JSON+YAML output — DB-agnostic
   - `index.ts` — barrel re-export
 - `src/diagram.ts` — Mermaid ER diagram generation (entityToBlock, fieldToAttribute, cascadeToRelationship, generateERDiagram, generateERDiagramFile) — DB-agnostic
+- `src/seed.ts` — Faker-based seed data generation (fieldRoleToFaker, fieldKindToFaker, fieldToFakerExpression, entityToSeedBlock, generateSeedData, generateSeedDataFile, SeedConfig) — DB-agnostic
 - `src/index.ts` — public API barrel
 - `src/targets/postgresql/`
   - `types.ts` — FieldKind->PG type, ParamKind->TS type, CascadeRule->PG mapping
@@ -113,7 +114,7 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
   - `access.ts` — typed query functions (better-sqlite3 Database, synchronous API, db.prepare().all())
   - `validator.ts` — re-exports from postgresql (DB-agnostic)
   - `test.ts` — re-exports from postgresql (DB-agnostic)
-- `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator, dialect, mysql-dialect, mysql-ddl, mysql-access, sqlite-dialect, sqlite-ddl, sqlite-access, schema, openapi-schema, openapi-paths, openapi-spec, diagram
+- `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator, dialect, mysql-dialect, mysql-ddl, mysql-access, sqlite-dialect, sqlite-ddl, sqlite-access, schema, openapi-schema, openapi-paths, openapi-spec, diagram, seed
 
 ### packages/agent-protocol
 
