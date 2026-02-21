@@ -8,7 +8,7 @@ export interface GeneratedFile {
 }
 
 export interface CodeGenerator {
-  generateDDL(schema: EntityRegistry): readonly GeneratedFile[];
+  generateDDL(schema: EntityRegistry, queries?: QueryRegistry): readonly GeneratedFile[];
   generateAccessLayer(
     schema: EntityRegistry,
     queries: QueryRegistry,

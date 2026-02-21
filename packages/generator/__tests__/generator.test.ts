@@ -12,7 +12,7 @@ import {
   defineQuery,
   createQueryRegistry,
 } from "@dikta/core";
-import { createPostgreSQLGenerator, createGenerator, generateAll } from "../src/generator.js";
+import { createPostgreSQLGenerator, createMySQLGenerator, createGenerator, generateAll } from "../src/generator.js";
 
 function makeFullSchema() {
   const Customer = defineEntity({
@@ -72,6 +72,16 @@ describe("createPostgreSQLGenerator", () => {
   });
 });
 
+describe("createMySQLGenerator", () => {
+  it("should return a CodeGenerator with all four methods", () => {
+    const gen = createMySQLGenerator();
+    expect(typeof gen.generateDDL).toBe("function");
+    expect(typeof gen.generateAccessLayer).toBe("function");
+    expect(typeof gen.generateValidators).toBe("function");
+    expect(typeof gen.generateContractTests).toBe("function");
+  });
+});
+
 describe("createGenerator", () => {
   it("should return a valid CodeGenerator for postgresql", () => {
     const gen = createGenerator("postgresql");
@@ -86,10 +96,12 @@ describe("createGenerator", () => {
     expect(typeof gen.generateDDL).toBe("function");
   });
 
-  it("should throw for mysql target (not yet implemented)", () => {
-    expect(() => createGenerator("mysql")).toThrow(
-      /MySQL target is not yet implemented/,
-    );
+  it("should return a valid CodeGenerator for mysql", () => {
+    const gen = createGenerator("mysql");
+    expect(typeof gen.generateDDL).toBe("function");
+    expect(typeof gen.generateAccessLayer).toBe("function");
+    expect(typeof gen.generateValidators).toBe("function");
+    expect(typeof gen.generateContractTests).toBe("function");
   });
 });
 
@@ -156,5 +168,43 @@ describe("generateAll", () => {
 
     // Manifest should list all files except itself
     expect(manifest.files.length).toBe(files.length - 1);
+  });
+});
+
+describe("generateAll with MySQL target", () => {
+  it("should produce DDL + access + validators + tests + manifest for mysql", () => {
+    const schema = makeFullSchema();
+    const queries = makeFullQueries(schema);
+    const files = generateAll(schema, queries, "mysql");
+
+    const paths = files.map((f) => f.path);
+
+    expect(paths.some((p) => p.startsWith("sql/"))).toBe(true);
+    expect(paths.some((p) => p.startsWith("access/"))).toBe(true);
+    expect(paths.some((p) => p.startsWith("validators/"))).toBe(true);
+    expect(paths.some((p) => p.startsWith("tests/"))).toBe(true);
+    expect(paths).toContain("manifest.json");
+  });
+
+  it("should generate MySQL-specific DDL syntax", () => {
+    const schema = makeFullSchema();
+    const queries = makeFullQueries(schema);
+    const files = generateAll(schema, queries, "mysql");
+
+    const customerSQL = files.find((f) => f.path.includes("customer") && f.path.endsWith(".sql"))!;
+    expect(customerSQL.content).toContain("ENGINE=InnoDB");
+    expect(customerSQL.content).toContain("CHAR(36)");
+    expect(customerSQL.content).toContain("`customer`");
+  });
+
+  it("should generate MySQL-specific access layer syntax", () => {
+    const schema = makeFullSchema();
+    const queries = makeFullQueries(schema);
+    const files = generateAll(schema, queries, "mysql");
+
+    const accessFile = files.find((f) => f.path.includes("access/") && !f.path.includes("index.ts"))!;
+    expect(accessFile.content).toContain("mysql2/promise");
+    expect(accessFile.content).toContain("pool: Pool");
+    expect(accessFile.content).toContain("pool.execute");
   });
 });

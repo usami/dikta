@@ -1,30 +1,57 @@
 import type { EntityRegistry, QueryRegistry } from "@dikta/core";
 import type { GeneratedFile, CodeGenerator, DatabaseTarget } from "./types.js";
-import { generateDDL } from "./targets/postgresql/ddl.js";
-import { generateAccessLayer } from "./targets/postgresql/access.js";
-import { generateValidators } from "./targets/postgresql/validator.js";
-import { generateContractTests } from "./targets/postgresql/test.js";
+import { generateDDL as generatePostgreSQLDDL } from "./targets/postgresql/ddl.js";
+import { generateAccessLayer as generatePostgreSQLAccessLayer } from "./targets/postgresql/access.js";
+import { generateValidators as generatePostgreSQLValidators } from "./targets/postgresql/validator.js";
+import { generateContractTests as generatePostgreSQLContractTests } from "./targets/postgresql/test.js";
+import { generateDDL as generateMySQLDDL } from "./targets/mysql/ddl.js";
+import { generateAccessLayer as generateMySQLAccessLayer } from "./targets/mysql/access.js";
+import { generateValidators as generateMySQLValidators } from "./targets/mysql/validator.js";
+import { generateContractTests as generateMySQLContractTests } from "./targets/mysql/test.js";
 import { generateManifest } from "./manifest.js";
 
 export function createPostgreSQLGenerator(): CodeGenerator {
   return Object.freeze({
-    generateDDL(schema: EntityRegistry): readonly GeneratedFile[] {
-      return generateDDL(schema);
+    generateDDL(schema: EntityRegistry, queries?: QueryRegistry): readonly GeneratedFile[] {
+      return generatePostgreSQLDDL(schema, queries);
     },
 
     generateAccessLayer(
       schema: EntityRegistry,
       queries: QueryRegistry,
     ): readonly GeneratedFile[] {
-      return generateAccessLayer(schema, queries);
+      return generatePostgreSQLAccessLayer(schema, queries);
     },
 
     generateValidators(schema: EntityRegistry): readonly GeneratedFile[] {
-      return generateValidators(schema);
+      return generatePostgreSQLValidators(schema);
     },
 
     generateContractTests(queries: QueryRegistry): readonly GeneratedFile[] {
-      return generateContractTests(queries);
+      return generatePostgreSQLContractTests(queries);
+    },
+  });
+}
+
+export function createMySQLGenerator(): CodeGenerator {
+  return Object.freeze({
+    generateDDL(schema: EntityRegistry, queries?: QueryRegistry): readonly GeneratedFile[] {
+      return generateMySQLDDL(schema, queries);
+    },
+
+    generateAccessLayer(
+      schema: EntityRegistry,
+      queries: QueryRegistry,
+    ): readonly GeneratedFile[] {
+      return generateMySQLAccessLayer(schema, queries);
+    },
+
+    generateValidators(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateMySQLValidators(schema);
+    },
+
+    generateContractTests(queries: QueryRegistry): readonly GeneratedFile[] {
+      return generateMySQLContractTests(queries);
     },
   });
 }
@@ -34,9 +61,7 @@ export function createGenerator(target: DatabaseTarget = "postgresql"): CodeGene
     case "postgresql":
       return createPostgreSQLGenerator();
     case "mysql":
-      throw new Error(
-        "MySQL target is not yet implemented. See ROADMAP.md Phase 2.",
-      );
+      return createMySQLGenerator();
   }
 }
 
@@ -59,7 +84,7 @@ export function generateAll(
 
   const generator = createGenerator(target);
 
-  const ddlFiles = generateDDL(schema, queries);
+  const ddlFiles = generator.generateDDL(schema, queries);
   const accessFiles = generator.generateAccessLayer(schema, queries);
   const validatorFiles = generator.generateValidators(schema);
   const testFiles = generator.generateContractTests(queries);
