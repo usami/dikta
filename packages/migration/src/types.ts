@@ -1,4 +1,5 @@
 import type { FieldKind, FieldRole, FieldPolicy, CascadeRule } from "@dikta/core";
+import type { DatabaseTarget } from "@dikta/generator";
 
 // ── Field specification (no phantom types) ──────────────────
 
@@ -15,8 +16,8 @@ export interface FieldSpec {
   readonly entity?: string;
   /** Cascade rule (only for kind: "ref"). */
   readonly cascade?: CascadeRule;
-  /** Raw PostgreSQL type override. */
-  readonly pgType?: string;
+  /** Raw SQL type override (database-agnostic). */
+  readonly rawType?: string;
 }
 
 // ── Field alterations ───────────────────────────────────────
@@ -79,6 +80,10 @@ export interface AlterFieldChange {
   readonly entity: string;
   readonly field: string;
   readonly changes: FieldAlterations;
+  /** Current field kind before alteration (needed for MySQL MODIFY COLUMN). */
+  readonly currentKind?: FieldKind;
+  /** Current field role before alteration (needed for MySQL MODIFY COLUMN). */
+  readonly currentRole?: FieldRole;
 }
 
 export interface AddInvariantChange {
@@ -184,4 +189,68 @@ export interface MigrationPlan {
   readonly changes: readonly SchemaChange[];
   readonly impact: MigrationImpact;
   readonly safety: SafetyEvaluation;
+}
+
+// ── Migration dialect ───────────────────────────────────────
+
+/** Encapsulates all DB-specific migration DDL differences. */
+export interface MigrationDialect {
+  readonly target: DatabaseTarget;
+
+  /** Quote an identifier (table/column name). */
+  quote(name: string): string;
+
+  /** Map a FieldKind + FieldRole to a SQL column type. */
+  mapFieldType(kind: FieldKind, role: FieldRole): string;
+
+  /** Map a CascadeRule to an ON DELETE clause (or null for app-level). */
+  mapCascade(rule: CascadeRule): string | null;
+
+  /** Return the column type for an enum field. PG: TEXT, MySQL: ENUM('a','b'). */
+  enumColumnType(values: readonly string[]): string;
+
+  /** Generate CREATE TABLE statement (with engine suffix for MySQL). */
+  createTable(tableName: string, columnDefs: readonly string[], constraintDefs: readonly string[]): string;
+
+  /** Generate DROP TABLE statement (with/without CASCADE). */
+  dropTable(tableName: string): string;
+
+  /** Generate ADD COLUMN clause. */
+  addColumn(tableName: string, colName: string, type: string, nullable: boolean): string;
+
+  /** Generate ALTER COLUMN TYPE syntax. PG: ALTER COLUMN ... TYPE. MySQL: MODIFY COLUMN ... type. */
+  alterColumnType(tableName: string, colName: string, newType: string): string;
+
+  /** Generate SET NOT NULL. MySQL needs the full type for MODIFY COLUMN. */
+  setNotNull(tableName: string, colName: string, currentType: string): string;
+
+  /** Generate DROP NOT NULL. MySQL needs the full type for MODIFY COLUMN. */
+  dropNotNull(tableName: string, colName: string, currentType: string): string;
+
+  /** Add an enum CHECK constraint (PG) or no-op (MySQL uses native ENUM). */
+  addEnumConstraint(tableName: string, colName: string, values: readonly string[]): string | null;
+
+  /** Drop an enum CHECK constraint (PG) or no-op (MySQL). */
+  dropEnumConstraint(tableName: string, colName: string): string | null;
+
+  /** Generate ADD CONSTRAINT FOREIGN KEY. */
+  addFKConstraint(tableName: string, colName: string, targetTable: string, cascade: string | null): string;
+
+  /** Generate DROP CONSTRAINT (PG) / DROP FOREIGN KEY (MySQL). */
+  dropFKConstraint(tableName: string, colName: string): string;
+
+  /** Verify table exists via information_schema. */
+  verifyTableExists(tableName: string): string;
+
+  /** Verify table was removed via information_schema. */
+  verifyTableRemoved(tableName: string): string;
+
+  /** Verify column exists via information_schema. */
+  verifyColumnExists(tableName: string, colName: string): string;
+
+  /** Verify column was removed via information_schema. */
+  verifyColumnRemoved(tableName: string, colName: string): string;
+
+  /** Verify column details via information_schema. */
+  verifyColumnDetails(tableName: string, colName: string): string;
 }

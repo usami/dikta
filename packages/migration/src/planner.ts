@@ -156,6 +156,8 @@ function diffFields(
           entity: entityName,
           field: fieldName,
           changes: Object.freeze(alterations),
+          currentKind: beforeField.kind,
+          currentRole: beforeField.role,
         }),
       );
     }

@@ -1,7 +1,11 @@
+import type { DatabaseTarget } from "@dikta/generator";
 import type { SchemaChange, SafetyEvaluation, SafetyLevel, ChangeRisk } from "./types.js";
 
-export function evaluateSafety(changes: readonly SchemaChange[]): SafetyEvaluation {
-  const risks: ChangeRisk[] = changes.map(evaluateChangeRisk);
+export function evaluateSafety(
+  changes: readonly SchemaChange[],
+  target: DatabaseTarget = "postgresql",
+): SafetyEvaluation {
+  const risks: ChangeRisk[] = changes.map((c) => evaluateChangeRisk(c, target));
 
   const hasDataLoss = risks.some((r) => r.dataLoss);
   const hasOffline = risks.some((r) => !r.online);
@@ -20,7 +24,7 @@ export function evaluateSafety(changes: readonly SchemaChange[]): SafetyEvaluati
   return Object.freeze({ level, risks: Object.freeze(risks), summary });
 }
 
-function evaluateChangeRisk(change: SchemaChange): ChangeRisk {
+function evaluateChangeRisk(change: SchemaChange, target: DatabaseTarget): ChangeRisk {
   switch (change.kind) {
     case "add_entity":
       return risk(change, {
@@ -43,11 +47,11 @@ function evaluateChangeRisk(change: SchemaChange): ChangeRisk {
         online: false,
         dataLoss: false,
         reversible: true,
-        notes: ["ALTER TABLE RENAME acquires brief ACCESS EXCLUSIVE lock"],
+        notes: [lockNote("ALTER TABLE RENAME", target)],
       });
 
     case "add_field":
-      return evaluateAddField(change);
+      return evaluateAddField(change, target);
 
     case "remove_field":
       return risk(change, {
@@ -62,11 +66,11 @@ function evaluateChangeRisk(change: SchemaChange): ChangeRisk {
         online: false,
         dataLoss: false,
         reversible: true,
-        notes: ["ALTER TABLE RENAME COLUMN acquires brief ACCESS EXCLUSIVE lock"],
+        notes: [lockNote("ALTER TABLE RENAME COLUMN", target)],
       });
 
     case "alter_field":
-      return evaluateAlterField(change);
+      return evaluateAlterField(change, target);
 
     case "add_invariant":
       return risk(change, {
@@ -86,48 +90,58 @@ function evaluateChangeRisk(change: SchemaChange): ChangeRisk {
   }
 }
 
-function evaluateAddField(change: SchemaChange & { kind: "add_field" }): ChangeRisk {
+function evaluateAddField(
+  change: SchemaChange & { kind: "add_field" },
+  target: DatabaseTarget,
+): ChangeRisk {
   const isNullable = change.spec.nullable !== false && change.spec.nullable !== undefined
     ? true
     : change.spec.nullable === undefined ? false : change.spec.nullable;
   const hasBackfill = change.backfill !== undefined;
 
-  // nullable field → always online, metadata-only
+  // nullable field -> always online, metadata-only
   if (isNullable) {
+    const notes = ["ADD COLUMN with NULL is a metadata-only operation"];
+    if (target === "mysql") {
+      notes.push("MySQL: ALGORITHM=INSTANT supported for nullable columns (8.0+)");
+    }
     return risk(change, {
       online: true,
       dataLoss: false,
       reversible: true,
-      notes: ["ADD COLUMN with NULL is a metadata-only operation"],
+      notes,
     });
   }
 
-  // NOT NULL without backfill → requires DEFAULT or will fail on non-empty table
+  // NOT NULL without backfill -> requires DEFAULT or will fail on non-empty table
   if (!hasBackfill) {
     return risk(change, {
       online: false,
       dataLoss: false,
       reversible: true,
       notes: [
-        "ADD COLUMN NOT NULL without DEFAULT requires table rewrite",
+        addColumnNotNullNote(target),
         "Consider adding a backfill expression or making the field nullable first",
       ],
     });
   }
 
-  // NOT NULL with backfill → three-step: add nullable, update, set not null
+  // NOT NULL with backfill -> three-step: add nullable, update, set not null
   return risk(change, {
     online: false,
     dataLoss: false,
     reversible: true,
     notes: [
       "Three-step migration: ADD COLUMN nullable, UPDATE with backfill, SET NOT NULL",
-      "UPDATE step scans entire table",
+      updateScanNote(target),
     ],
   });
 }
 
-function evaluateAlterField(change: SchemaChange & { kind: "alter_field" }): ChangeRisk {
+function evaluateAlterField(
+  change: SchemaChange & { kind: "alter_field" },
+  target: DatabaseTarget,
+): ChangeRisk {
   const notes: string[] = [];
   let online = true;
   let dataLoss = false;
@@ -137,14 +151,18 @@ function evaluateAlterField(change: SchemaChange & { kind: "alter_field" }): Cha
 
   if (alterations.kind) {
     online = false;
-    notes.push(`Type change from ${alterations.kind.from} to ${alterations.kind.to} may require data conversion`);
+    const typeNote = `Type change from ${alterations.kind.from} to ${alterations.kind.to} may require data conversion`;
+    notes.push(typeNote);
+    if (target === "mysql") {
+      notes.push("MySQL: MODIFY COLUMN with type change uses ALGORITHM=COPY by default");
+    }
   }
 
   if (alterations.nullable) {
     if (alterations.nullable.from === true && alterations.nullable.to === false) {
       // nullable -> NOT NULL: requires full table scan to validate
       online = false;
-      notes.push("SET NOT NULL requires full table scan to validate no NULLs exist");
+      notes.push(setNotNullNote(target));
     } else {
       // NOT NULL -> nullable: metadata-only
       notes.push("DROP NOT NULL is a metadata-only operation");
@@ -195,6 +213,38 @@ function evaluateAlterField(change: SchemaChange & { kind: "alter_field" }): Cha
 
   return risk(change, { online, dataLoss, reversible, notes });
 }
+
+// ── Target-specific note helpers ────────────────────────────
+
+function lockNote(operation: string, target: DatabaseTarget): string {
+  if (target === "mysql") {
+    return `${operation} acquires metadata lock (MySQL)`;
+  }
+  return `${operation} acquires brief ACCESS EXCLUSIVE lock`;
+}
+
+function addColumnNotNullNote(target: DatabaseTarget): string {
+  if (target === "mysql") {
+    return "ADD COLUMN NOT NULL without DEFAULT requires table rebuild (MySQL: ALGORITHM=COPY)";
+  }
+  return "ADD COLUMN NOT NULL without DEFAULT requires table rewrite";
+}
+
+function updateScanNote(target: DatabaseTarget): string {
+  if (target === "mysql") {
+    return "UPDATE step scans entire table (MySQL: consider pt-online-schema-change for large tables)";
+  }
+  return "UPDATE step scans entire table";
+}
+
+function setNotNullNote(target: DatabaseTarget): string {
+  if (target === "mysql") {
+    return "SET NOT NULL requires MODIFY COLUMN with full table rebuild (MySQL: ALGORITHM=COPY)";
+  }
+  return "SET NOT NULL requires full table scan to validate no NULLs exist";
+}
+
+// ── Helpers ─────────────────────────────────────────────────
 
 function risk(
   change: SchemaChange,

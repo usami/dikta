@@ -1,4 +1,4 @@
-import type { FieldDefinition } from "@dikta/core";
+import type { FieldDefinition, FieldKind, FieldRole } from "@dikta/core";
 import type {
   SchemaChange,
   AddEntityChange,
@@ -135,12 +135,15 @@ export function alterField(
   entity: string,
   field: string,
   changes: FieldAlterations,
+  opts?: { readonly currentKind?: FieldKind; readonly currentRole?: FieldRole },
 ): AlterFieldChange {
   return Object.freeze({
     kind: "alter_field" as const,
     entity,
     field,
     changes: Object.freeze({ ...changes }),
+    ...(opts?.currentKind !== undefined && { currentKind: opts.currentKind }),
+    ...(opts?.currentRole !== undefined && { currentRole: opts.currentRole }),
   });
 }
 

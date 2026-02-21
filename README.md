@@ -202,7 +202,8 @@ Dikta is in early development. The current implementation covers:
 | 3 | Code generation (CLI, DDL, access functions, validators) | Done |
 | 4 | Migration planner (schema diff, safe migration SQL) | Done |
 | 5 | Agent protocol (agent-context.json, violation reporter) | Done |
-| 6 | Multi-database support — dialect abstraction layer | In progress |
+| 6 | Multi-database support — generator dialect abstraction | Done |
+| 7 | Multi-database support — migration dialect abstraction | Done |
 
 ## Development
 

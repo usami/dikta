@@ -25,6 +25,11 @@ export { analyzeImpact } from "./impact.js";
 // SQL generation
 export { generateMigrationFiles, generateMigrationDirectory } from "./sql-generator.js";
 
+// Dialects
+export { createMigrationDialect } from "./dialects/factory.js";
+export { createPostgreSQLMigrationDialect } from "./dialects/postgresql.js";
+export { createMySQLMigrationDialect } from "./dialects/mysql.js";
+
 // Types
 export type {
   SchemaChange,
@@ -52,4 +57,5 @@ export type {
   MigrationFiles,
   MigrationMetadata,
   MigrationPlan,
+  MigrationDialect,
 } from "./types.js";

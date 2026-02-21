@@ -1,12 +1,6 @@
 import type { EntityRegistry } from "@dikta/core";
-import type { GeneratedFile } from "@dikta/generator";
-import {
-  fileHeader,
-  toSnakeCase,
-  toTableName,
-  fieldKindToPGType,
-  cascadeRuleToPG,
-} from "@dikta/generator";
+import type { GeneratedFile, DatabaseTarget } from "@dikta/generator";
+import { fileHeader, toSnakeCase, toTableName } from "@dikta/generator";
 import type {
   SchemaChange,
   MigrationFiles,
@@ -14,8 +8,10 @@ import type {
   MigrationImpact,
   SafetyEvaluation,
   MigrationDefinition,
+  MigrationDialect,
   FieldSpec,
 } from "./types.js";
+import { createMigrationDialect } from "./dialects/factory.js";
 
 // ── Public API ──────────────────────────────────────────────
 
@@ -24,12 +20,14 @@ export function generateMigrationFiles(
   impact: MigrationImpact,
   safety: SafetyEvaluation,
   _schema?: EntityRegistry,
+  target: DatabaseTarget = "postgresql",
 ): MigrationFiles {
+  const dialect = createMigrationDialect(target);
   const changes = migration.config.changes;
 
-  const up = generateUpSQL(changes);
-  const down = generateDownSQL(changes);
-  const verify = generateVerifySQL(changes);
+  const up = generateUpSQL(changes, dialect);
+  const down = generateDownSQL(changes, dialect);
+  const verify = generateVerifySQL(changes, dialect);
   const metadata: MigrationMetadata = {
     name: migration.name,
     description: migration.config.description ?? "",
@@ -47,8 +45,9 @@ export function generateMigrationDirectory(
   impact: MigrationImpact,
   safety: SafetyEvaluation,
   schema?: EntityRegistry,
+  target: DatabaseTarget = "postgresql",
 ): readonly GeneratedFile[] {
-  const files = generateMigrationFiles(migration, impact, safety, schema);
+  const files = generateMigrationFiles(migration, impact, safety, schema, target);
   const timestamp = migration.config.timestamp
     ? migration.config.timestamp.replace(/[^0-9]/g, "").slice(0, 14)
     : new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 14);
@@ -85,7 +84,7 @@ export function generateMigrationDirectory(
 
 // ── up.sql generation ───────────────────────────────────────
 
-function generateUpSQL(changes: readonly SchemaChange[]): string {
+function generateUpSQL(changes: readonly SchemaChange[], dialect: MigrationDialect): string {
   const lines: string[] = [
     fileHeader(),
     "-- Forward migration (up)",
@@ -95,7 +94,7 @@ function generateUpSQL(changes: readonly SchemaChange[]): string {
   ];
 
   for (const change of changes) {
-    lines.push(...generateUpChange(change));
+    lines.push(...generateUpChange(change, dialect));
     lines.push("");
   }
 
@@ -103,28 +102,30 @@ function generateUpSQL(changes: readonly SchemaChange[]): string {
   return lines.join("\n");
 }
 
-function generateUpChange(change: SchemaChange): string[] {
+function generateUpChange(change: SchemaChange, dialect: MigrationDialect): string[] {
+  const q = dialect.quote.bind(dialect);
+
   switch (change.kind) {
     case "add_entity":
-      return generateCreateTable(change.entity, change.fields);
+      return generateCreateTable(change.entity, change.fields, dialect);
     case "remove_entity":
-      return [`DROP TABLE IF EXISTS "${toTableName(change.entity)}" CASCADE;`];
+      return [dialect.dropTable(toTableName(change.entity))];
     case "rename_entity":
       return [
-        `ALTER TABLE "${toTableName(change.from)}" RENAME TO "${toTableName(change.to)}";`,
+        `ALTER TABLE ${q(toTableName(change.from))} RENAME TO ${q(toTableName(change.to))};`,
       ];
     case "add_field":
-      return generateAddColumn(change.entity, change.field, change.spec, change.backfill);
+      return generateAddColumn(change.entity, change.field, change.spec, dialect, change.backfill);
     case "remove_field":
       return [
-        `ALTER TABLE "${toTableName(change.entity)}" DROP COLUMN IF EXISTS "${toSnakeCase(change.field)}";`,
+        `ALTER TABLE ${q(toTableName(change.entity))} DROP COLUMN IF EXISTS ${q(toSnakeCase(change.field))};`,
       ];
     case "rename_field":
       return [
-        `ALTER TABLE "${toTableName(change.entity)}" RENAME COLUMN "${toSnakeCase(change.from)}" TO "${toSnakeCase(change.to)}";`,
+        `ALTER TABLE ${q(toTableName(change.entity))} RENAME COLUMN ${q(toSnakeCase(change.from))} TO ${q(toSnakeCase(change.to))};`,
       ];
     case "alter_field":
-      return generateAlterColumn(change.entity, change.field, change);
+      return generateAlterColumn(change.entity, change.field, change, dialect);
     case "add_invariant":
       return [`-- Application invariant added: ${change.invariant}`];
     case "remove_invariant":
@@ -135,14 +136,25 @@ function generateUpChange(change: SchemaChange): string[] {
 function generateCreateTable(
   entityName: string,
   fields: Readonly<Record<string, FieldSpec>>,
+  dialect: MigrationDialect,
 ): string[] {
   const tableName = toTableName(entityName);
-  const lines: string[] = [`CREATE TABLE "${tableName}" (`];
+  const q = dialect.quote.bind(dialect);
   const columnDefs: string[] = [];
+  const constraintDefs: string[] = [];
 
   for (const [fieldName, spec] of Object.entries(fields)) {
     const colName = toSnakeCase(fieldName);
-    const pgType = spec.pgType ?? fieldKindToPGType(spec.kind, spec.role ?? "general");
+    let colType: string;
+
+    if (spec.rawType) {
+      colType = spec.rawType;
+    } else if (spec.kind === "enum" && spec.values && spec.values.length > 0) {
+      colType = dialect.enumColumnType(spec.values);
+    } else {
+      colType = dialect.mapFieldType(spec.kind, spec.role ?? "general");
+    }
+
     const nullable = spec.nullable ? "" : " NOT NULL";
     let extra = "";
 
@@ -150,20 +162,19 @@ function generateCreateTable(
       extra = " PRIMARY KEY";
     }
 
-    columnDefs.push(`  "${colName}" ${pgType}${nullable}${extra}`);
+    columnDefs.push(`  ${q(colName)} ${colType}${nullable}${extra}`);
   }
 
-  lines.push(columnDefs.join(",\n"));
-  lines.push(");");
+  const lines: string[] = [dialect.createTable(tableName, columnDefs, constraintDefs)];
 
-  // Add CHECK constraints for enum fields
+  // Add CHECK constraints for enum fields (PG only — MySQL uses native ENUM)
   for (const [fieldName, spec] of Object.entries(fields)) {
     if (spec.kind === "enum" && spec.values && spec.values.length > 0) {
       const colName = toSnakeCase(fieldName);
-      const valueList = spec.values.map((v) => `'${v}'`).join(", ");
-      lines.push(
-        `ALTER TABLE "${tableName}" ADD CONSTRAINT "chk_${tableName}_${colName}" CHECK ("${colName}" IN (${valueList}));`,
-      );
+      const constraint = dialect.addEnumConstraint(tableName, colName, spec.values);
+      if (constraint) {
+        lines.push(constraint);
+      }
     }
   }
 
@@ -172,15 +183,8 @@ function generateCreateTable(
     if (spec.kind === "ref" && spec.entity) {
       const colName = toSnakeCase(fieldName);
       const targetTable = toTableName(spec.entity);
-      const cascadeClause = spec.cascade ? cascadeRuleToPG(spec.cascade) : null;
-      const fkParts = [
-        `ALTER TABLE "${tableName}" ADD CONSTRAINT "fk_${tableName}_${colName}"`,
-        `FOREIGN KEY ("${colName}") REFERENCES "${targetTable}" ("id")`,
-      ];
-      if (cascadeClause) {
-        fkParts[1] += ` ${cascadeClause}`;
-      }
-      lines.push(fkParts.join(" ") + ";");
+      const cascadeClause = spec.cascade ? dialect.mapCascade(spec.cascade) : null;
+      lines.push(dialect.addFKConstraint(tableName, colName, targetTable, cascadeClause));
     }
   }
 
@@ -191,47 +195,50 @@ function generateAddColumn(
   entity: string,
   field: string,
   spec: FieldSpec,
+  dialect: MigrationDialect,
   backfill?: string,
 ): string[] {
   const tableName = toTableName(entity);
   const colName = toSnakeCase(field);
-  const pgType = spec.pgType ?? fieldKindToPGType(spec.kind, spec.role ?? "general");
+  const q = dialect.quote.bind(dialect);
+  let colType: string;
+
+  if (spec.rawType) {
+    colType = spec.rawType;
+  } else if (spec.kind === "enum" && spec.values && spec.values.length > 0) {
+    colType = dialect.enumColumnType(spec.values);
+  } else {
+    colType = dialect.mapFieldType(spec.kind, spec.role ?? "general");
+  }
+
   const isNullable = spec.nullable ?? false;
   const lines: string[] = [];
 
   if (!isNullable && backfill) {
     // Three-step: add nullable, backfill, set NOT NULL
     lines.push(`-- Step 1: Add column as nullable`);
-    lines.push(`ALTER TABLE "${tableName}" ADD COLUMN "${colName}" ${pgType};`);
+    lines.push(dialect.addColumn(tableName, colName, colType, true));
     lines.push(`-- Step 2: Backfill existing rows`);
-    lines.push(`UPDATE "${tableName}" SET "${colName}" = ${backfill};`);
+    lines.push(`UPDATE ${q(tableName)} SET ${q(colName)} = ${backfill};`);
     lines.push(`-- Step 3: Set NOT NULL constraint`);
-    lines.push(`ALTER TABLE "${tableName}" ALTER COLUMN "${colName}" SET NOT NULL;`);
+    lines.push(dialect.setNotNull(tableName, colName, colType));
   } else {
-    const nullable = isNullable ? "" : " NOT NULL";
-    lines.push(`ALTER TABLE "${tableName}" ADD COLUMN "${colName}" ${pgType}${nullable};`);
+    lines.push(dialect.addColumn(tableName, colName, colType, isNullable));
   }
 
-  // CHECK constraint for enum
+  // CHECK constraint for enum (PG only)
   if (spec.kind === "enum" && spec.values && spec.values.length > 0) {
-    const valueList = spec.values.map((v) => `'${v}'`).join(", ");
-    lines.push(
-      `ALTER TABLE "${tableName}" ADD CONSTRAINT "chk_${tableName}_${colName}" CHECK ("${colName}" IN (${valueList}));`,
-    );
+    const constraint = dialect.addEnumConstraint(tableName, colName, spec.values);
+    if (constraint) {
+      lines.push(constraint);
+    }
   }
 
   // FK constraint for ref
   if (spec.kind === "ref" && spec.entity) {
     const targetTable = toTableName(spec.entity);
-    const cascadeClause = spec.cascade ? cascadeRuleToPG(spec.cascade) : null;
-    const fkParts = [
-      `ALTER TABLE "${tableName}" ADD CONSTRAINT "fk_${tableName}_${colName}"`,
-      `FOREIGN KEY ("${colName}") REFERENCES "${targetTable}" ("id")`,
-    ];
-    if (cascadeClause) {
-      fkParts[1] += ` ${cascadeClause}`;
-    }
-    lines.push(fkParts.join(" ") + ";");
+    const cascadeClause = spec.cascade ? dialect.mapCascade(spec.cascade) : null;
+    lines.push(dialect.addFKConstraint(tableName, colName, targetTable, cascadeClause));
   }
 
   return lines;
@@ -241,28 +248,29 @@ function generateAlterColumn(
   entity: string,
   field: string,
   change: SchemaChange & { kind: "alter_field" },
+  dialect: MigrationDialect,
 ): string[] {
   const tableName = toTableName(entity);
   const colName = toSnakeCase(field);
+  const q = dialect.quote.bind(dialect);
   const lines: string[] = [];
   const { changes } = change;
 
   if (changes.kind) {
-    const newPgType = fieldKindToPGType(changes.kind.to, "general");
-    lines.push(
-      `ALTER TABLE "${tableName}" ALTER COLUMN "${colName}" TYPE ${newPgType} USING "${colName}"::${newPgType};`,
-    );
+    const newType = dialect.mapFieldType(changes.kind.to, "general");
+    lines.push(dialect.alterColumnType(tableName, colName, newType));
   }
 
   if (changes.nullable) {
+    // Resolve the current column type for MySQL MODIFY COLUMN
+    const currentKind = changes.kind ? changes.kind.to : (change.currentKind ?? "string");
+    const currentRole = change.currentRole ?? "general";
+    const currentType = dialect.mapFieldType(currentKind, currentRole);
+
     if (changes.nullable.to === false) {
-      lines.push(
-        `ALTER TABLE "${tableName}" ALTER COLUMN "${colName}" SET NOT NULL;`,
-      );
+      lines.push(dialect.setNotNull(tableName, colName, currentType));
     } else {
-      lines.push(
-        `ALTER TABLE "${tableName}" ALTER COLUMN "${colName}" DROP NOT NULL;`,
-      );
+      lines.push(dialect.dropNotNull(tableName, colName, currentType));
     }
   }
 
@@ -270,11 +278,10 @@ function generateAlterColumn(
     // Update CHECK constraint for enum
     if (changes.values.added.length > 0 || changes.values.removed.length > 0) {
       lines.push(`-- Update enum CHECK constraint`);
-      lines.push(
-        `ALTER TABLE "${tableName}" DROP CONSTRAINT IF EXISTS "chk_${tableName}_${colName}";`,
-      );
-      // We need the final set of values — but we only have added/removed
-      // The caller should provide the full set; for now, note it
+      const dropConstraint = dialect.dropEnumConstraint(tableName, colName);
+      if (dropConstraint) {
+        lines.push(dropConstraint);
+      }
       if (changes.values.removed.length > 0) {
         lines.push(
           `-- WARNING: Values removed (${changes.values.removed.join(", ")}). Ensure no rows contain these values.`,
@@ -284,11 +291,9 @@ function generateAlterColumn(
   }
 
   if (changes.cascade) {
-    const newCascade = cascadeRuleToPG(changes.cascade.to);
+    const newCascade = dialect.mapCascade(changes.cascade.to);
     lines.push(`-- Update cascade rule`);
-    lines.push(
-      `ALTER TABLE "${tableName}" DROP CONSTRAINT IF EXISTS "fk_${tableName}_${colName}";`,
-    );
+    lines.push(dialect.dropFKConstraint(tableName, colName));
     if (newCascade) {
       lines.push(
         `-- Re-add FK with new cascade rule (requires target table reference)`,
@@ -297,7 +302,7 @@ function generateAlterColumn(
   }
 
   if (lines.length === 0) {
-    lines.push(`-- Metadata-only change on "${tableName}"."${colName}" (no SQL required)`);
+    lines.push(`-- Metadata-only change on ${q(tableName)}.${q(colName)} (no SQL required)`);
   }
 
   return lines;
@@ -305,7 +310,7 @@ function generateAlterColumn(
 
 // ── down.sql generation ─────────────────────────────────────
 
-function generateDownSQL(changes: readonly SchemaChange[]): string {
+function generateDownSQL(changes: readonly SchemaChange[], dialect: MigrationDialect): string {
   const lines: string[] = [
     fileHeader(),
     "-- Rollback migration (down)",
@@ -318,7 +323,7 @@ function generateDownSQL(changes: readonly SchemaChange[]): string {
   const reversed = [...changes].reverse();
 
   for (const change of reversed) {
-    lines.push(...generateDownChange(change));
+    lines.push(...generateDownChange(change, dialect));
     lines.push("");
   }
 
@@ -326,10 +331,12 @@ function generateDownSQL(changes: readonly SchemaChange[]): string {
   return lines.join("\n");
 }
 
-function generateDownChange(change: SchemaChange): string[] {
+function generateDownChange(change: SchemaChange, dialect: MigrationDialect): string[] {
+  const q = dialect.quote.bind(dialect);
+
   switch (change.kind) {
     case "add_entity":
-      return [`DROP TABLE IF EXISTS "${toTableName(change.entity)}" CASCADE;`];
+      return [dialect.dropTable(toTableName(change.entity))];
 
     case "remove_entity":
       return [
@@ -339,12 +346,12 @@ function generateDownChange(change: SchemaChange): string[] {
 
     case "rename_entity":
       return [
-        `ALTER TABLE "${toTableName(change.to)}" RENAME TO "${toTableName(change.from)}";`,
+        `ALTER TABLE ${q(toTableName(change.to))} RENAME TO ${q(toTableName(change.from))};`,
       ];
 
     case "add_field":
       return [
-        `ALTER TABLE "${toTableName(change.entity)}" DROP COLUMN IF EXISTS "${toSnakeCase(change.field)}";`,
+        `ALTER TABLE ${q(toTableName(change.entity))} DROP COLUMN IF EXISTS ${q(toSnakeCase(change.field))};`,
       ];
 
     case "remove_field":
@@ -354,11 +361,11 @@ function generateDownChange(change: SchemaChange): string[] {
 
     case "rename_field":
       return [
-        `ALTER TABLE "${toTableName(change.entity)}" RENAME COLUMN "${toSnakeCase(change.to)}" TO "${toSnakeCase(change.from)}";`,
+        `ALTER TABLE ${q(toTableName(change.entity))} RENAME COLUMN ${q(toSnakeCase(change.to))} TO ${q(toSnakeCase(change.from))};`,
       ];
 
     case "alter_field":
-      return generateReverseAlter(change);
+      return generateReverseAlter(change, dialect);
 
     case "add_invariant":
       return [`-- Reverse: remove application invariant: ${change.invariant}`];
@@ -370,28 +377,29 @@ function generateDownChange(change: SchemaChange): string[] {
 
 function generateReverseAlter(
   change: SchemaChange & { kind: "alter_field" },
+  dialect: MigrationDialect,
 ): string[] {
   const tableName = toTableName(change.entity);
   const colName = toSnakeCase(change.field);
+  const q = dialect.quote.bind(dialect);
   const lines: string[] = [];
   const { changes } = change;
 
   if (changes.kind) {
-    const oldPgType = fieldKindToPGType(changes.kind.from, "general");
-    lines.push(
-      `ALTER TABLE "${tableName}" ALTER COLUMN "${colName}" TYPE ${oldPgType} USING "${colName}"::${oldPgType};`,
-    );
+    const oldType = dialect.mapFieldType(changes.kind.from, "general");
+    lines.push(dialect.alterColumnType(tableName, colName, oldType));
   }
 
   if (changes.nullable) {
+    // Resolve the type for the reverse direction
+    const currentKind = changes.kind ? changes.kind.from : (change.currentKind ?? "string");
+    const currentRole = change.currentRole ?? "general";
+    const currentType = dialect.mapFieldType(currentKind, currentRole);
+
     if (changes.nullable.from === false) {
-      lines.push(
-        `ALTER TABLE "${tableName}" ALTER COLUMN "${colName}" SET NOT NULL;`,
-      );
+      lines.push(dialect.setNotNull(tableName, colName, currentType));
     } else {
-      lines.push(
-        `ALTER TABLE "${tableName}" ALTER COLUMN "${colName}" DROP NOT NULL;`,
-      );
+      lines.push(dialect.dropNotNull(tableName, colName, currentType));
     }
   }
 
@@ -402,7 +410,7 @@ function generateReverseAlter(
   }
 
   if (lines.length === 0) {
-    lines.push(`-- Reverse metadata-only change on "${tableName}"."${colName}"`);
+    lines.push(`-- Reverse metadata-only change on ${q(tableName)}.${q(colName)}`);
   }
 
   return lines;
@@ -410,7 +418,7 @@ function generateReverseAlter(
 
 // ── verify.sql generation ───────────────────────────────────
 
-function generateVerifySQL(changes: readonly SchemaChange[]): string {
+function generateVerifySQL(changes: readonly SchemaChange[], dialect: MigrationDialect): string {
   const lines: string[] = [
     fileHeader(),
     "-- Verification queries",
@@ -419,83 +427,38 @@ function generateVerifySQL(changes: readonly SchemaChange[]): string {
   ];
 
   for (const change of changes) {
-    lines.push(...generateVerifyChange(change));
+    lines.push(generateVerifyChange(change, dialect));
     lines.push("");
   }
 
   return lines.join("\n");
 }
 
-function generateVerifyChange(change: SchemaChange): string[] {
+function generateVerifyChange(change: SchemaChange, dialect: MigrationDialect): string {
   switch (change.kind) {
     case "add_entity":
-      return [
-        `-- Verify table "${toTableName(change.entity)}" exists`,
-        `SELECT EXISTS (`,
-        `  SELECT 1 FROM information_schema.tables`,
-        `  WHERE table_name = '${toTableName(change.entity)}'`,
-        `) AS "${toTableName(change.entity)}_exists";`,
-      ];
+      return dialect.verifyTableExists(toTableName(change.entity));
 
     case "remove_entity":
-      return [
-        `-- Verify table "${toTableName(change.entity)}" was removed`,
-        `SELECT NOT EXISTS (`,
-        `  SELECT 1 FROM information_schema.tables`,
-        `  WHERE table_name = '${toTableName(change.entity)}'`,
-        `) AS "${toTableName(change.entity)}_removed";`,
-      ];
+      return dialect.verifyTableRemoved(toTableName(change.entity));
 
     case "rename_entity":
-      return [
-        `-- Verify table renamed from "${toTableName(change.from)}" to "${toTableName(change.to)}"`,
-        `SELECT EXISTS (`,
-        `  SELECT 1 FROM information_schema.tables`,
-        `  WHERE table_name = '${toTableName(change.to)}'`,
-        `) AS "${toTableName(change.to)}_exists";`,
-      ];
+      return dialect.verifyTableExists(toTableName(change.to));
 
     case "add_field":
-      return [
-        `-- Verify column "${toSnakeCase(change.field)}" on "${toTableName(change.entity)}"`,
-        `SELECT EXISTS (`,
-        `  SELECT 1 FROM information_schema.columns`,
-        `  WHERE table_name = '${toTableName(change.entity)}'`,
-        `  AND column_name = '${toSnakeCase(change.field)}'`,
-        `) AS "${toTableName(change.entity)}_${toSnakeCase(change.field)}_exists";`,
-      ];
+      return dialect.verifyColumnExists(toTableName(change.entity), toSnakeCase(change.field));
 
     case "remove_field":
-      return [
-        `-- Verify column "${toSnakeCase(change.field)}" was removed from "${toTableName(change.entity)}"`,
-        `SELECT NOT EXISTS (`,
-        `  SELECT 1 FROM information_schema.columns`,
-        `  WHERE table_name = '${toTableName(change.entity)}'`,
-        `  AND column_name = '${toSnakeCase(change.field)}'`,
-        `) AS "${toTableName(change.entity)}_${toSnakeCase(change.field)}_removed";`,
-      ];
+      return dialect.verifyColumnRemoved(toTableName(change.entity), toSnakeCase(change.field));
 
     case "rename_field":
-      return [
-        `-- Verify column renamed from "${toSnakeCase(change.from)}" to "${toSnakeCase(change.to)}" on "${toTableName(change.entity)}"`,
-        `SELECT EXISTS (`,
-        `  SELECT 1 FROM information_schema.columns`,
-        `  WHERE table_name = '${toTableName(change.entity)}'`,
-        `  AND column_name = '${toSnakeCase(change.to)}'`,
-        `) AS "${toTableName(change.entity)}_${toSnakeCase(change.to)}_exists";`,
-      ];
+      return dialect.verifyColumnExists(toTableName(change.entity), toSnakeCase(change.to));
 
     case "alter_field":
-      return [
-        `-- Verify column "${toSnakeCase(change.field)}" on "${toTableName(change.entity)}" was altered`,
-        `SELECT column_name, data_type, is_nullable`,
-        `FROM information_schema.columns`,
-        `WHERE table_name = '${toTableName(change.entity)}'`,
-        `AND column_name = '${toSnakeCase(change.field)}';`,
-      ];
+      return dialect.verifyColumnDetails(toTableName(change.entity), toSnakeCase(change.field));
 
     case "add_invariant":
     case "remove_invariant":
-      return [`-- Invariant changes are application-level (no SQL verification needed)`];
+      return `-- Invariant changes are application-level (no SQL verification needed)`;
   }
 }
