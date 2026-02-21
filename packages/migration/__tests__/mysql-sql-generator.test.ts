@@ -123,7 +123,7 @@ describe("generateMigrationFiles (MySQL)", () => {
 
     it("should generate DROP COLUMN with backtick quoting", () => {
       const files = makeFiles([removeField("User", "legacyCol")]);
-      expect(files.up).toContain("DROP COLUMN IF EXISTS `legacy_col`");
+      expect(files.up).toContain("DROP COLUMN `legacy_col`");
     });
 
     it("should generate RENAME COLUMN with backtick quoting", () => {
@@ -196,7 +196,7 @@ describe("generateMigrationFiles (MySQL)", () => {
       const files = makeFiles([
         addField("User", "bio", { kind: "string", nullable: true }),
       ]);
-      expect(files.down).toContain("DROP COLUMN IF EXISTS `bio`");
+      expect(files.down).toContain("DROP COLUMN `bio`");
     });
 
     it("should reverse operations in reverse order", () => {

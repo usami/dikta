@@ -129,11 +129,12 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - `src/types.ts` — SchemaChange (discriminated union), FieldSpec, MigrationDialect interface, Safety/Impact/Migration types
 - `src/definition.ts` — defineMigration API, change builders (addEntity, removeField, etc.), fieldDefinitionToSpec
 - `src/planner.ts` — planMigration: schema diff engine comparing two EntityRegistry instances (populates currentKind/currentRole)
-- `src/safety.ts` — evaluateSafety: target-aware risk evaluation per change kind (PG/MySQL-specific notes)
+- `src/safety.ts` — evaluateSafety: target-aware risk evaluation per change kind (PG/MySQL/SQLite-specific notes)
 - `src/impact.ts` — analyzeImpact: query contract impact analysis (breaking/compatible/informational)
 - `src/sql-generator.ts` — generateMigrationFiles/Directory: up.sql, down.sql, verify.sql, metadata.json (target-aware via MigrationDialect)
 - `src/dialects/postgresql.ts` — PostgreSQL MigrationDialect: double-quote identifiers, CASCADE on DROP, ALTER COLUMN, CHECK constraints
 - `src/dialects/mysql.ts` — MySQL MigrationDialect: backtick identifiers, MODIFY COLUMN, native ENUM, ENGINE=InnoDB, DROP FOREIGN KEY
+- `src/dialects/sqlite.ts` — SQLite MigrationDialect: double-quote identifiers, table rebuild comments for unsupported ALTER TABLE ops, sqlite_master/pragma_table_info verification
 - `src/dialects/factory.ts` — `createMigrationDialect(target)` dispatch
 - `src/index.ts` — public API barrel
 - `__tests__/` — definition, planner, safety, impact, sql-generator, integration, mysql-sql-generator, mysql-safety

@@ -117,9 +117,7 @@ function generateUpChange(change: SchemaChange, dialect: MigrationDialect): stri
     case "add_field":
       return generateAddColumn(change.entity, change.field, change.spec, dialect, change.backfill);
     case "remove_field":
-      return [
-        `ALTER TABLE ${q(toTableName(change.entity))} DROP COLUMN IF EXISTS ${q(toSnakeCase(change.field))};`,
-      ];
+      return [dialect.dropColumn(toTableName(change.entity), toSnakeCase(change.field))];
     case "rename_field":
       return [
         `ALTER TABLE ${q(toTableName(change.entity))} RENAME COLUMN ${q(toSnakeCase(change.from))} TO ${q(toSnakeCase(change.to))};`,
@@ -165,30 +163,33 @@ function generateCreateTable(
     columnDefs.push(`  ${q(colName)} ${colType}${nullable}${extra}`);
   }
 
-  const lines: string[] = [dialect.createTable(tableName, columnDefs, constraintDefs)];
-
-  // Add CHECK constraints for enum fields (PG only — MySQL uses native ENUM)
+  // Embed CHECK constraints for enum fields inline in CREATE TABLE
+  // Only when dialect uses TEXT for enums (PG, SQLite); MySQL uses native ENUM()
   for (const [fieldName, spec] of Object.entries(fields)) {
     if (spec.kind === "enum" && spec.values && spec.values.length > 0) {
-      const colName = toSnakeCase(fieldName);
-      const constraint = dialect.addEnumConstraint(tableName, colName, spec.values);
-      if (constraint) {
-        lines.push(constraint);
+      if (dialect.enumColumnType(spec.values) === "TEXT") {
+        const colName = toSnakeCase(fieldName);
+        const valueList = spec.values.map((v) => `'${v}'`).join(", ");
+        constraintDefs.push(`  CHECK (${q(colName)} IN (${valueList}))`);
       }
     }
   }
 
-  // Add FOREIGN KEY constraints for ref fields
+  // Embed FOREIGN KEY constraints for ref fields inline in CREATE TABLE
   for (const [fieldName, spec] of Object.entries(fields)) {
     if (spec.kind === "ref" && spec.entity) {
       const colName = toSnakeCase(fieldName);
       const targetTable = toTableName(spec.entity);
       const cascadeClause = spec.cascade ? dialect.mapCascade(spec.cascade) : null;
-      lines.push(dialect.addFKConstraint(tableName, colName, targetTable, cascadeClause));
+      let fk = `  FOREIGN KEY (${q(colName)}) REFERENCES ${q(targetTable)} (${q("id")})`;
+      if (cascadeClause) {
+        fk += ` ${cascadeClause}`;
+      }
+      constraintDefs.push(fk);
     }
   }
 
-  return lines;
+  return [dialect.createTable(tableName, columnDefs, constraintDefs)];
 }
 
 function generateAddColumn(
@@ -350,9 +351,7 @@ function generateDownChange(change: SchemaChange, dialect: MigrationDialect): st
       ];
 
     case "add_field":
-      return [
-        `ALTER TABLE ${q(toTableName(change.entity))} DROP COLUMN IF EXISTS ${q(toSnakeCase(change.field))};`,
-      ];
+      return [dialect.dropColumn(toTableName(change.entity), toSnakeCase(change.field))];
 
     case "remove_field":
       return [

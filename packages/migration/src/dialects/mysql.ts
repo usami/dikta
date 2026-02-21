@@ -29,6 +29,11 @@ export function createMySQLMigrationDialect(): MigrationDialect {
       return `DROP TABLE IF EXISTS ${q(tableName)};`;
     },
 
+    dropColumn(tableName, colName) {
+      // MySQL <8.0.34 does not support IF EXISTS on DROP COLUMN
+      return `ALTER TABLE ${q(tableName)} DROP COLUMN ${q(colName)};`;
+    },
+
     addColumn(tableName, colName, type, nullable) {
       const nullClause = nullable ? "" : " NOT NULL";
       return `ALTER TABLE ${q(tableName)} ADD COLUMN ${q(colName)} ${type}${nullClause};`;

@@ -218,6 +218,9 @@ export interface MigrationDialect {
   /** Generate ADD COLUMN clause. */
   addColumn(tableName: string, colName: string, type: string, nullable: boolean): string;
 
+  /** Generate DROP COLUMN statement. */
+  dropColumn(tableName: string, colName: string): string;
+
   /** Generate ALTER COLUMN TYPE syntax. PG: ALTER COLUMN ... TYPE. MySQL: MODIFY COLUMN ... type. */
   alterColumnType(tableName: string, colName: string, newType: string): string;
 

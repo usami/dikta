@@ -156,6 +156,9 @@ function evaluateAlterField(
     if (target === "mysql") {
       notes.push("MySQL: MODIFY COLUMN with type change uses ALGORITHM=COPY by default");
     }
+    if (target === "sqlite") {
+      notes.push("SQLite: type change requires table rebuild (CREATE new, copy data, DROP old, RENAME)");
+    }
   }
 
   if (alterations.nullable) {
@@ -220,12 +223,18 @@ function lockNote(operation: string, target: DatabaseTarget): string {
   if (target === "mysql") {
     return `${operation} acquires metadata lock (MySQL)`;
   }
+  if (target === "sqlite") {
+    return `${operation} acquires EXCLUSIVE file-level lock (SQLite locks entire database)`;
+  }
   return `${operation} acquires brief ACCESS EXCLUSIVE lock`;
 }
 
 function addColumnNotNullNote(target: DatabaseTarget): string {
   if (target === "mysql") {
     return "ADD COLUMN NOT NULL without DEFAULT requires table rebuild (MySQL: ALGORITHM=COPY)";
+  }
+  if (target === "sqlite") {
+    return "ADD COLUMN NOT NULL requires DEFAULT value (SQLite)";
   }
   return "ADD COLUMN NOT NULL without DEFAULT requires table rewrite";
 }
@@ -234,12 +243,18 @@ function updateScanNote(target: DatabaseTarget): string {
   if (target === "mysql") {
     return "UPDATE step scans entire table (MySQL: consider pt-online-schema-change for large tables)";
   }
+  if (target === "sqlite") {
+    return "UPDATE step scans entire table (SQLite: no online schema change tools)";
+  }
   return "UPDATE step scans entire table";
 }
 
 function setNotNullNote(target: DatabaseTarget): string {
   if (target === "mysql") {
     return "SET NOT NULL requires MODIFY COLUMN with full table rebuild (MySQL: ALGORITHM=COPY)";
+  }
+  if (target === "sqlite") {
+    return "SET NOT NULL requires table rebuild (SQLite: no ALTER COLUMN support)";
   }
   return "SET NOT NULL requires full table scan to validate no NULLs exist";
 }

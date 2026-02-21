@@ -27,6 +27,10 @@ export function createPostgreSQLMigrationDialect(): MigrationDialect {
       return `DROP TABLE IF EXISTS ${q(tableName)} CASCADE;`;
     },
 
+    dropColumn(tableName, colName) {
+      return `ALTER TABLE ${q(tableName)} DROP COLUMN IF EXISTS ${q(colName)};`;
+    },
+
     addColumn(tableName, colName, type, nullable) {
       const nullClause = nullable ? "" : " NOT NULL";
       return `ALTER TABLE ${q(tableName)} ADD COLUMN ${q(colName)} ${type}${nullClause};`;
