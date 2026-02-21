@@ -9,6 +9,7 @@ import { generateOpenAPISpec } from "./openapi/index.js";
 import type { OpenAPIConfig, OpenAPIFormat } from "./openapi/index.js";
 import { generateERDiagramFile } from "./diagram.js";
 import { generateSeedDataFile } from "./seed.js";
+import { generateGraphQLTypes } from "./graphql/index.js";
 import {
   generateAgentContext,
   serializeAgentContext,
@@ -43,6 +44,7 @@ program
   .option("--openapi-format <format>", "OpenAPI output format: json (default), yaml, or both")
   .option("--diagram", "Generate only Mermaid ER diagram")
   .option("--seed", "Generate only faker-based seed data")
+  .option("--graphql", "Generate only GraphQL SDL type definitions")
   .option("-o, --output <dir>", "Output directory", ".generated")
   .option("-c, --config <path>", "Path to dikta config file")
   .action(async (opts: {
@@ -55,13 +57,14 @@ program
     openapiFormat?: string;
     diagram?: boolean;
     seed?: boolean;
+    graphql?: boolean;
     output: string;
     config?: string;
   }) => {
     try {
       const config = await loadConfig(opts.config);
       const generator = createGenerator(config.target);
-      const selective = opts.ddl || opts.access || opts.validators || opts.tests || opts.schemas || opts.openapi || opts.diagram || opts.seed;
+      const selective = opts.ddl || opts.access || opts.validators || opts.tests || opts.schemas || opts.openapi || opts.diagram || opts.seed || opts.graphql;
 
       // Merge CLI format override with config
       const openapiConfig: OpenAPIConfig = {
@@ -100,6 +103,9 @@ program
         }
         if (opts.seed) {
           parts.push(...generateSeedDataFile(config.schema, config.seed));
+        }
+        if (opts.graphql) {
+          parts.push(...generateGraphQLTypes(config.schema));
         }
         files = parts;
       } else {

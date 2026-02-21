@@ -19,6 +19,7 @@ import type { OpenAPIConfig } from "./openapi/index.js";
 import { generateERDiagramFile } from "./diagram.js";
 import { generateSeedDataFile } from "./seed.js";
 import type { SeedConfig } from "./seed.js";
+import { generateGraphQLTypes } from "./graphql/index.js";
 
 export function createPostgreSQLGenerator(): CodeGenerator {
   return Object.freeze({
@@ -59,6 +60,10 @@ export function createPostgreSQLGenerator(): CodeGenerator {
 
     generateSeedData(schema: EntityRegistry): readonly GeneratedFile[] {
       return generateSeedDataFile(schema);
+    },
+
+    generateGraphQL(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateGraphQLTypes(schema);
     },
   });
 }
@@ -103,6 +108,10 @@ export function createMySQLGenerator(): CodeGenerator {
     generateSeedData(schema: EntityRegistry): readonly GeneratedFile[] {
       return generateSeedDataFile(schema);
     },
+
+    generateGraphQL(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateGraphQLTypes(schema);
+    },
   });
 }
 
@@ -145,6 +154,10 @@ export function createSQLiteGenerator(): CodeGenerator {
 
     generateSeedData(schema: EntityRegistry): readonly GeneratedFile[] {
       return generateSeedDataFile(schema);
+    },
+
+    generateGraphQL(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateGraphQLTypes(schema);
     },
   });
 }
@@ -191,6 +204,7 @@ export function generateAll(
   const openAPISpecFiles = generateOpenAPISpec(schema, queries, openapi);
   const diagramFiles = generator.generateERDiagram(schema);
   const seedFiles = generateSeedDataFile(schema, seed);
+  const graphqlFiles = generator.generateGraphQL(schema);
 
   const allFiles = [
     ...ddlFiles,
@@ -203,6 +217,7 @@ export function generateAll(
     ...openAPISpecFiles,
     ...diagramFiles,
     ...seedFiles,
+    ...graphqlFiles,
   ];
 
   const manifest = generateManifest(schema, queries, allFiles);
