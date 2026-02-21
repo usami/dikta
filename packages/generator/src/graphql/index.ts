@@ -18,3 +18,14 @@ export {
   paramKindToGraphQL,
   shapeFieldToGraphQL,
 } from "./operations.js";
+
+export {
+  generateGraphQLResolvers,
+  generateResolversFile,
+  generateQueryResolver,
+  generateEntityResolver,
+  collectRefFields,
+  collectDataLoaderHints,
+  paramKindToTSType,
+} from "./resolvers.js";
+export type { RefFieldInfo } from "./resolvers.js";

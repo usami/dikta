@@ -98,6 +98,9 @@ Entity -> GraphQL Object Types, Query contracts -> Query/Mutation operations. SD
 
 ### Phase 3 — CLI Integration and Generation Wiring
 
+- [x] `resolvers.ts` — Generate resolver stubs with typed context
+  - Ref field -> nested resolver for relationship resolution
+  - DataLoader pattern hints for N+1 prevention
 - [x] CLI integration (`--graphql` flag) and `generateAll()` wiring
 - [x] Export GraphQL types and operations from public API
 

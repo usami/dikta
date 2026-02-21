@@ -19,7 +19,7 @@ import type { OpenAPIConfig } from "./openapi/index.js";
 import { generateERDiagramFile } from "./diagram.js";
 import { generateSeedDataFile } from "./seed.js";
 import type { SeedConfig } from "./seed.js";
-import { generateGraphQLTypes, generateGraphQLOperations } from "./graphql/index.js";
+import { generateGraphQLTypes, generateGraphQLOperations, generateGraphQLResolvers } from "./graphql/index.js";
 
 export function createPostgreSQLGenerator(): CodeGenerator {
   return Object.freeze({
@@ -68,6 +68,10 @@ export function createPostgreSQLGenerator(): CodeGenerator {
 
     generateGraphQLOperations(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
       return generateGraphQLOperations(schema, queries);
+    },
+
+    generateGraphQLResolvers(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
+      return generateGraphQLResolvers(schema, queries);
     },
   });
 }
@@ -120,6 +124,10 @@ export function createMySQLGenerator(): CodeGenerator {
     generateGraphQLOperations(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
       return generateGraphQLOperations(schema, queries);
     },
+
+    generateGraphQLResolvers(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
+      return generateGraphQLResolvers(schema, queries);
+    },
   });
 }
 
@@ -171,6 +179,10 @@ export function createSQLiteGenerator(): CodeGenerator {
     generateGraphQLOperations(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
       return generateGraphQLOperations(schema, queries);
     },
+
+    generateGraphQLResolvers(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
+      return generateGraphQLResolvers(schema, queries);
+    },
   });
 }
 
@@ -218,6 +230,7 @@ export function generateAll(
   const seedFiles = generateSeedDataFile(schema, seed);
   const graphqlFiles = generator.generateGraphQL(schema);
   const graphqlOperationFiles = generator.generateGraphQLOperations(schema, queries);
+  const graphqlResolverFiles = generator.generateGraphQLResolvers(schema, queries);
 
   const allFiles = [
     ...ddlFiles,
@@ -232,6 +245,7 @@ export function generateAll(
     ...seedFiles,
     ...graphqlFiles,
     ...graphqlOperationFiles,
+    ...graphqlResolverFiles,
   ];
 
   const manifest = generateManifest(schema, queries, allFiles);
