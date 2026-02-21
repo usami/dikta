@@ -9,5 +9,7 @@ export function createMigrationDialect(target: DatabaseTarget): MigrationDialect
       return createPostgreSQLMigrationDialect();
     case "mysql":
       return createMySQLMigrationDialect();
+    case "sqlite":
+      throw new Error("SQLite migration dialect is not yet implemented");
   }
 }

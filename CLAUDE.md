@@ -54,7 +54,7 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - **SchemaChange kind**: `"add_entity" | "remove_entity" | "rename_entity" | "add_field" | "remove_field" | "rename_field" | "alter_field" | "add_invariant" | "remove_invariant"`
 - **TaskKind**: `"implement_query" | "add_entity" | "modify_schema" | "fix_contract_violation"`
 - **ViolationKind**: `"scan_strategy" | "max_rows" | "row_filter" | "max_joins" | "validation_error" | "performance_conflict"`
-- **DatabaseTarget**: `"postgresql" | "mysql"`
+- **DatabaseTarget**: `"postgresql" | "mysql" | "sqlite"`
 
 ## File Organization
 
@@ -96,6 +96,14 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
   - `topo-sort.ts` — re-exports from postgresql (DB-agnostic)
   - `ddl.ts` — CREATE TABLE with backtick quoting, ENGINE=InnoDB, native ENUM(), CONSTRAINT FOREIGN KEY, inline COMMENT
   - `access.ts` — typed query functions (mysql2/promise Pool, `?` placeholders, pool.execute())
+  - `validator.ts` — re-exports from postgresql (DB-agnostic)
+  - `test.ts` — re-exports from postgresql (DB-agnostic)
+- `src/targets/sqlite/`
+  - `types.ts` — FieldKind->SQLite type (TEXT, INTEGER, REAL), ParamKind->TS type, CascadeRule->SQLite mapping
+  - `dialect.ts` — SQLiteDialect implementing SQLDialect interface (double-quote identifiers, `?` placeholders)
+  - `topo-sort.ts` — re-exports from postgresql (DB-agnostic)
+  - `ddl.ts` — CREATE TABLE with CHECK constraints for enums, SQL comments for PII (no COMMENT ON)
+  - `access.ts` — typed query functions (better-sqlite3 Database, synchronous API, db.prepare().all())
   - `validator.ts` — re-exports from postgresql (DB-agnostic)
   - `test.ts` — re-exports from postgresql (DB-agnostic)
 - `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator, dialect, mysql-dialect, mysql-ddl, mysql-access, schema

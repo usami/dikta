@@ -20,7 +20,7 @@ export interface CodeGenerator {
 
 // ── Dialect Abstraction Layer ────────────────────────────────
 
-export type DatabaseTarget = "postgresql" | "mysql";
+export type DatabaseTarget = "postgresql" | "mysql" | "sqlite";
 
 export interface SQLDialect {
   readonly target: DatabaseTarget;

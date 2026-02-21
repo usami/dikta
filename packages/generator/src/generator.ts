@@ -8,6 +8,10 @@ import { generateDDL as generateMySQLDDL } from "./targets/mysql/ddl.js";
 import { generateAccessLayer as generateMySQLAccessLayer } from "./targets/mysql/access.js";
 import { generateValidators as generateMySQLValidators } from "./targets/mysql/validator.js";
 import { generateContractTests as generateMySQLContractTests } from "./targets/mysql/test.js";
+import { generateDDL as generateSQLiteDDL } from "./targets/sqlite/ddl.js";
+import { generateAccessLayer as generateSQLiteAccessLayer } from "./targets/sqlite/access.js";
+import { generateValidators as generateSQLiteValidators } from "./targets/sqlite/validator.js";
+import { generateContractTests as generateSQLiteContractTests } from "./targets/sqlite/test.js";
 import { generateManifest } from "./manifest.js";
 import { generateSchemas } from "./schema.js";
 
@@ -65,12 +69,41 @@ export function createMySQLGenerator(): CodeGenerator {
   });
 }
 
+export function createSQLiteGenerator(): CodeGenerator {
+  return Object.freeze({
+    generateDDL(schema: EntityRegistry, queries?: QueryRegistry): readonly GeneratedFile[] {
+      return generateSQLiteDDL(schema, queries);
+    },
+
+    generateAccessLayer(
+      schema: EntityRegistry,
+      queries: QueryRegistry,
+    ): readonly GeneratedFile[] {
+      return generateSQLiteAccessLayer(schema, queries);
+    },
+
+    generateValidators(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateSQLiteValidators(schema);
+    },
+
+    generateContractTests(queries: QueryRegistry): readonly GeneratedFile[] {
+      return generateSQLiteContractTests(queries);
+    },
+
+    generateSchemas(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateSchemas(schema);
+    },
+  });
+}
+
 export function createGenerator(target: DatabaseTarget = "postgresql"): CodeGenerator {
   switch (target) {
     case "postgresql":
       return createPostgreSQLGenerator();
     case "mysql":
       return createMySQLGenerator();
+    case "sqlite":
+      return createSQLiteGenerator();
   }
 }
 

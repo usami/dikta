@@ -1,5 +1,5 @@
 // Generator
-export { createPostgreSQLGenerator, createMySQLGenerator, createGenerator, generateAll } from "./generator.js";
+export { createPostgreSQLGenerator, createMySQLGenerator, createSQLiteGenerator, createGenerator, generateAll } from "./generator.js";
 
 // Config
 export { loadConfig } from "./config.js";
@@ -19,9 +19,13 @@ export { fieldKindToPGType, cascadeRuleToPG } from "./targets/postgresql/types.j
 // MySQL type mappings
 export { fieldKindToMySQLType, cascadeRuleToMySQL } from "./targets/mysql/types.js";
 
+// SQLite type mappings
+export { fieldKindToSQLiteType, cascadeRuleToSQLite } from "./targets/sqlite/types.js";
+
 // Dialect
 export { createPostgreSQLDialect } from "./targets/postgresql/dialect.js";
 export { createMySQLDialect } from "./targets/mysql/dialect.js";
+export { createSQLiteDialect } from "./targets/sqlite/dialect.js";
 
 // Types
 export type { GeneratedFile, CodeGenerator, DatabaseTarget, SQLDialect } from "./types.js";

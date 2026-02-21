@@ -17,14 +17,14 @@ Lightweight target for local dev / testing. SQLite's limited ALTER TABLE support
 
 ### Phase 1 — SQLite Generator
 
-- [ ] Create `packages/generator/src/targets/sqlite/`
+- [x] Create `packages/generator/src/targets/sqlite/`
   - `types.ts` — FieldKind to SQLite type mapping (UUID->TEXT, DECIMAL->REAL, BOOLEAN->INTEGER, TIMESTAMP->TEXT ISO-8601)
   - `dialect.ts` — `SQLiteDialect` implementing `SQLDialect` interface (double-quote identifiers, `?` placeholders)
   - `ddl.ts` — CREATE TABLE with SQLite constraints (no native ENUM — use CHECK, no COMMENT — use SQL comments)
   - `access.ts` — better-sqlite3 driver, synchronous API pattern
-- [ ] Wire `createSQLiteGenerator()` into `createGenerator("sqlite")` dispatch
-- [ ] Export SQLite types, dialect, and generator from public API
-- [ ] Add `"sqlite"` to `DatabaseTarget` union type
+- [x] Wire `createSQLiteGenerator()` into `createGenerator("sqlite")` dispatch
+- [x] Export SQLite types, dialect, and generator from public API
+- [x] Add `"sqlite"` to `DatabaseTarget` union type
 
 ### Phase 2 — SQLite Migration
 
