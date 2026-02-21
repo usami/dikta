@@ -50,10 +50,10 @@ Generate OpenAPI 3.1 spec from entity + query contracts. This is the first "API 
 
 ### Phase 1 — Entity Schema Components
 
-- [ ] Create `packages/generator/src/openapi/`
+- [x] Create `packages/generator/src/openapi/`
   - `schema.ts` — Entity -> OpenAPI Schema Object (FieldKind -> JSON Schema type/format mapping)
   - Handle nullable fields, enum fields (as `enum` keyword), ref fields (as `$ref`)
-- [ ] Wire into `CodeGenerator` interface as `generateOpenAPI()` method
+- [x] Wire into `CodeGenerator` interface as `generateOpenAPI()` method
 
 ### Phase 2 — Query Path Operations
 

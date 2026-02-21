@@ -14,6 +14,7 @@ import { generateValidators as generateSQLiteValidators } from "./targets/sqlite
 import { generateContractTests as generateSQLiteContractTests } from "./targets/sqlite/test.js";
 import { generateManifest } from "./manifest.js";
 import { generateSchemas } from "./schema.js";
+import { generateOpenAPISchemas } from "./openapi/index.js";
 
 export function createPostgreSQLGenerator(): CodeGenerator {
   return Object.freeze({
@@ -38,6 +39,10 @@ export function createPostgreSQLGenerator(): CodeGenerator {
 
     generateSchemas(schema: EntityRegistry): readonly GeneratedFile[] {
       return generateSchemas(schema);
+    },
+
+    generateOpenAPI(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateOpenAPISchemas(schema);
     },
   });
 }
@@ -65,6 +70,10 @@ export function createMySQLGenerator(): CodeGenerator {
 
     generateSchemas(schema: EntityRegistry): readonly GeneratedFile[] {
       return generateSchemas(schema);
+    },
+
+    generateOpenAPI(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateOpenAPISchemas(schema);
     },
   });
 }
@@ -131,6 +140,7 @@ export function generateAll(
   const validatorFiles = generator.generateValidators(schema);
   const testFiles = generator.generateContractTests(queries);
   const schemaFiles = generator.generateSchemas(schema);
+  const openAPIFiles = generator.generateOpenAPI(schema);
 
   const allFiles = [
     ...ddlFiles,
@@ -138,6 +148,7 @@ export function generateAll(
     ...validatorFiles,
     ...testFiles,
     ...schemaFiles,
+    ...openAPIFiles,
   ];
 
   const manifest = generateManifest(schema, queries, allFiles);

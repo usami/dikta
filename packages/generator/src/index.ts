@@ -7,6 +7,9 @@ export { loadConfig } from "./config.js";
 // Schema (Zod validation)
 export { generateSchemas, generateEntitySchema, fieldKindToZod } from "./schema.js";
 
+// OpenAPI
+export { generateOpenAPISchemas, entityToJsonSchema, fieldToJsonSchema } from "./openapi/index.js";
+
 // Manifest
 export { generateManifest } from "./manifest.js";
 
