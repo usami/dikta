@@ -193,6 +193,95 @@ export interface MigrationPlan {
 
 // ── Migration dialect ───────────────────────────────────────
 
+// ── Migration chain types ──────────────────────────────────
+
+/** Driver-agnostic database executor — user wraps their own driver behind this. */
+export interface MigrationExecutor {
+  execute(sql: string): Promise<void>;
+  query<T>(sql: string): Promise<readonly T[]>;
+}
+
+/** A row in the migration tracking table. */
+export interface MigrationRecord {
+  readonly version: string;
+  readonly name: string;
+  readonly applied_at: string;
+  readonly checksum: string;
+}
+
+/** Whether a discovered migration has been applied or is pending. */
+export type MigrationEntryStatus = "applied" | "pending";
+
+/** A discovered migration combined with its applied state. */
+export interface MigrationEntry {
+  readonly version: string;
+  readonly name: string;
+  readonly dirPath: string;
+  readonly status: MigrationEntryStatus;
+  readonly appliedAt?: string;
+  readonly checksum: string;
+  /** Checksum mismatch: stored checksum differs from current file checksum. */
+  readonly checksumMismatch?: boolean;
+}
+
+/** A migration discovered from the filesystem. */
+export interface DiscoveredMigration {
+  readonly version: string;
+  readonly name: string;
+  readonly dirPath: string;
+  readonly metadata: MigrationMetadata;
+  readonly upSQL: string;
+  readonly downSQL: string;
+  readonly verifySQL: string;
+}
+
+/** Result of running migrateUp or migrateDown. */
+export interface MigrationResult {
+  readonly applied: readonly { readonly version: string; readonly name: string }[];
+  readonly skipped: readonly { readonly version: string; readonly name: string }[];
+  readonly errors: readonly MigrationError[];
+}
+
+/** Error from a failed migration. */
+export interface MigrationError {
+  readonly version: string;
+  readonly name: string;
+  readonly message: string;
+}
+
+/** Configuration for migration chain operations. */
+export interface MigrationChainConfig {
+  readonly migrationsDir: string;
+  readonly target: DatabaseTarget;
+  readonly tableName?: string;
+}
+
+/** Summary of migration status. */
+export interface MigrationStatusSummary {
+  readonly total: number;
+  readonly applied: number;
+  readonly pending: number;
+  readonly entries: readonly MigrationEntry[];
+}
+
+/** Options for migrateUp. */
+export interface MigrateUpOptions {
+  /** Apply up to this specific version (inclusive). */
+  readonly target?: string;
+  /** Maximum number of migrations to apply. */
+  readonly count?: number;
+}
+
+/** Options for migrateDown. */
+export interface MigrateDownOptions {
+  /** Roll back down to this specific version (inclusive — this version stays applied). */
+  readonly target?: string;
+  /** Maximum number of migrations to roll back (default: 1). */
+  readonly count?: number;
+}
+
+// ── Migration dialect ───────────────────────────────────────
+
 /** Encapsulates all DB-specific migration DDL differences. */
 export interface MigrationDialect {
   readonly target: DatabaseTarget;
