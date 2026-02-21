@@ -58,11 +58,21 @@ Dikta is a schema-first code generation monorepo with 4 packages: core, generato
 
 ---
 
-## Priority 3: Runtime Validation Generation
+## Priority 3: Runtime Validation Generation ✅
 
-- Generate Zod / Valibot schemas from `@dikta/core` entity definitions
-- Reuse phantom type information for compile-time + runtime safety
-- Output: `validators.ts` per entity with parse/safeParse functions
+- [x] Generate Zod schemas from `@dikta/core` entity definitions
+- [x] Map all 8 FieldKinds to Zod method chains (uuid, string, decimal, integer, boolean, timestamp, enum, ref)
+- [x] Handle nullable fields with `.nullable()` chaining
+- [x] Generate per-entity schema files with `parse`/`safeParse` helpers + barrel index
+- [x] Database-agnostic — shared by all target generators
+- [x] Wire into `CodeGenerator` interface, `generateAll()`, CLI (`--schemas`)
+- Files modified:
+  - `packages/generator/src/schema.ts` — `fieldKindToZod()`, `generateEntitySchema()`, `generateSchemas()`
+  - `packages/generator/src/types.ts` — `CodeGenerator.generateSchemas()` method
+  - `packages/generator/src/generator.ts` — wired into both generators + `generateAll()`
+  - `packages/generator/src/cli.ts` — `--schemas` option
+  - `packages/generator/src/index.ts` — public API exports
+  - `packages/generator/__tests__/schema.test.ts` — 19 tests
 
 ---
 

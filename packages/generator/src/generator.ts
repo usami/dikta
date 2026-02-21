@@ -9,6 +9,7 @@ import { generateAccessLayer as generateMySQLAccessLayer } from "./targets/mysql
 import { generateValidators as generateMySQLValidators } from "./targets/mysql/validator.js";
 import { generateContractTests as generateMySQLContractTests } from "./targets/mysql/test.js";
 import { generateManifest } from "./manifest.js";
+import { generateSchemas } from "./schema.js";
 
 export function createPostgreSQLGenerator(): CodeGenerator {
   return Object.freeze({
@@ -29,6 +30,10 @@ export function createPostgreSQLGenerator(): CodeGenerator {
 
     generateContractTests(queries: QueryRegistry): readonly GeneratedFile[] {
       return generatePostgreSQLContractTests(queries);
+    },
+
+    generateSchemas(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateSchemas(schema);
     },
   });
 }
@@ -52,6 +57,10 @@ export function createMySQLGenerator(): CodeGenerator {
 
     generateContractTests(queries: QueryRegistry): readonly GeneratedFile[] {
       return generateMySQLContractTests(queries);
+    },
+
+    generateSchemas(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateSchemas(schema);
     },
   });
 }
@@ -88,12 +97,14 @@ export function generateAll(
   const accessFiles = generator.generateAccessLayer(schema, queries);
   const validatorFiles = generator.generateValidators(schema);
   const testFiles = generator.generateContractTests(queries);
+  const schemaFiles = generator.generateSchemas(schema);
 
   const allFiles = [
     ...ddlFiles,
     ...accessFiles,
     ...validatorFiles,
     ...testFiles,
+    ...schemaFiles,
   ];
 
   const manifest = generateManifest(schema, queries, allFiles);

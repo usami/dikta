@@ -4,6 +4,9 @@ export { createPostgreSQLGenerator, createMySQLGenerator, createGenerator, gener
 // Config
 export { loadConfig } from "./config.js";
 
+// Schema (Zod validation)
+export { generateSchemas, generateEntitySchema, fieldKindToZod } from "./schema.js";
+
 // Manifest
 export { generateManifest } from "./manifest.js";
 

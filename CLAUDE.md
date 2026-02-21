@@ -80,6 +80,7 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
 - `src/generator.ts` — orchestrator: composes target modules via `createGenerator(target)` dispatch
 - `src/config.ts` — DiktaConfig type + config file discovery
 - `src/cli.ts` — commander CLI (generate, verify, context commands)
+- `src/schema.ts` — Zod schema generation (fieldKindToZod, generateEntitySchema, generateSchemas) — DB-agnostic
 - `src/index.ts` — public API barrel
 - `src/targets/postgresql/`
   - `types.ts` — FieldKind->PG type, ParamKind->TS type, CascadeRule->PG mapping
@@ -97,7 +98,7 @@ The cast is safe because `_type` is phantom (never accessed at runtime).
   - `access.ts` — typed query functions (mysql2/promise Pool, `?` placeholders, pool.execute())
   - `validator.ts` — re-exports from postgresql (DB-agnostic)
   - `test.ts` — re-exports from postgresql (DB-agnostic)
-- `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator, dialect, mysql-dialect, mysql-ddl, mysql-access
+- `__tests__/` — topo-sort, ddl, access, validator, test-gen, manifest, generator, dialect, mysql-dialect, mysql-ddl, mysql-access, schema
 
 ### packages/agent-protocol
 

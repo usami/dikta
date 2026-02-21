@@ -34,6 +34,7 @@ program
   .option("--access", "Generate only access layer files")
   .option("--validators", "Generate only validator files")
   .option("--tests", "Generate only contract test files")
+  .option("--schemas", "Generate only Zod validation schema files")
   .option("-o, --output <dir>", "Output directory", ".generated")
   .option("-c, --config <path>", "Path to dikta config file")
   .action(async (opts: {
@@ -41,13 +42,14 @@ program
     access?: boolean;
     validators?: boolean;
     tests?: boolean;
+    schemas?: boolean;
     output: string;
     config?: string;
   }) => {
     try {
       const config = await loadConfig(opts.config);
       const generator = createGenerator(config.target);
-      const selective = opts.ddl || opts.access || opts.validators || opts.tests;
+      const selective = opts.ddl || opts.access || opts.validators || opts.tests || opts.schemas;
 
       let files: readonly GeneratedFile[];
 
@@ -66,6 +68,9 @@ program
         }
         if (opts.tests) {
           parts.push(...generator.generateContractTests(config.queries));
+        }
+        if (opts.schemas) {
+          parts.push(...generator.generateSchemas(config.schema));
         }
         files = parts;
       } else {
