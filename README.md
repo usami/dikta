@@ -122,10 +122,16 @@ npx dikta generate --ddl
 npx dikta generate --access
 npx dikta generate --validators
 npx dikta generate --tests
-npx dikta generate --schemas
+npx dikta generate --schemas          # Zod validation schemas
+npx dikta generate --openapi          # OpenAPI 3.1 spec
+npx dikta generate --openapi-format yaml
+npx dikta generate --graphql          # GraphQL SDL + resolver stubs
+npx dikta generate --diagram          # Mermaid ER diagram
+npx dikta generate --seed             # Faker-based seed data
 
-# Custom output directory
+# Custom output directory and database target
 npx dikta generate --output ./src/generated
+npx dikta generate --target mysql     # postgresql (default) | mysql | sqlite
 
 # Verify contracts without generating
 npx dikta verify
@@ -135,6 +141,12 @@ npx dikta verify --format agent
 
 # Generate agent context files (.dikta/agent-context.json + INSTRUCTIONS.md)
 npx dikta context
+
+# Run migrations
+npx dikta migrate up                  # apply pending migrations
+npx dikta migrate up --count 1        # apply one migration
+npx dikta migrate down --count 1      # roll back one migration
+npx dikta migrate status              # show migration state
 ```
 
 Or use the programmatic API:
@@ -169,9 +181,14 @@ You maintain:                        Agents generate:
 |   roles, policies        |         | Validators               |
 |                          |         | Contract verification    |
 | Query Contracts          |         | Migration SQL            |
-|   params, return shape,  |         +--------------------------+
-|   performance, security  |                    |
-+--------------------------+                    v
+|   params, return shape,  |         | Zod validation schemas   |
+|   performance, security  |         | OpenAPI 3.1 spec         |
+|                          |         | GraphQL SDL + resolvers  |
+|                          |         | Mermaid ER diagram       |
+|                          |         | Faker seed data          |
+|                          |         +--------------------------+
++--------------------------+                    |
+                                                v
                                      +--------------------------+
                                      | Verification Layer       |
                                      |   Type checking (tsc)    |

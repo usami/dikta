@@ -83,7 +83,12 @@ Human / upstream agent maintains:
   │  - Typed access functions                    │
   │  - Validators (invariant checks)             │
   │  - Contract verification tests               │
-  │  - Migration SQL                             │
+  │  - Migration SQL (up / down / verify)        │
+  │  - Zod validation schemas                    │
+  │  - OpenAPI 3.1 spec (JSON / YAML)            │
+  │  - GraphQL SDL + resolver stubs              │
+  │  - Mermaid ER diagram                        │
+  │  - Faker seed data                           │
   └─────────────────────────────────────────────┘
                         │
                         ▼
@@ -125,8 +130,8 @@ A machine-readable summary of the entire project's data layer — entities, rela
 | Build | tsup | Fast, simple, handles DTS generation |
 | Test | vitest | Fast, native TS support, good DX |
 | Validation | zod | Already standard in TS ecosystem, composable |
-| CLI | citty or commander | Lightweight, well-maintained |
-| First DB target | PostgreSQL | Most common for serious applications |
+| CLI | commander | Lightweight, well-maintained |
+| DB targets | PostgreSQL, MySQL, SQLite | PostgreSQL primary; MySQL and SQLite via dialect abstraction |
 | SQL parser | pgsql-ast-parser (or minimal) | For contract verification against SQL |
 
 ## Naming Conventions
@@ -150,12 +155,12 @@ A machine-readable summary of the entire project's data layer — entities, rela
 | 3 | Code generation | Phase 1 + 2 | CLI generates DDL + access functions + validators |
 | 4 | Migration planner | Phase 3 | Schema diff → safe migration SQL |
 | 5 | Agent protocol | Phase 1+ | agent-context.json + violation reporter |
+| 6 | Multi-database generators | Phase 3 | MySQL + SQLite dialect abstraction for DDL, access, validators |
+| 7 | Multi-database migrations | Phase 4 + 6 | MySQL + SQLite migration dialects, migration chain execution |
 
-Phase 1 is the foundation. Phase 3 is the most work. Phase 5 can start early and evolve continuously.
+Phase 1 is the foundation. Phase 3 is the most work. Phase 5 can start early and evolve continuously. Phases 6–7 extended the generator and migration systems with dialect abstractions for MySQL and SQLite.
 
-## Non-Goals (for now)
+## Non-Goals
 
 - **Runtime query builder** — Dikta is not an ORM. No `.where().join().select()`.
-- **Multi-database support** — PostgreSQL, MySQL, and SQLite supported.
 - **GUI / dashboard** — CLI and file-based workflows only.
-- **Schema migration execution** — Dikta generates migration SQL but does not run it. Use existing tools (dbmate, flyway, etc.) for execution.
