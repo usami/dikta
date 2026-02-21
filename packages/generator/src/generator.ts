@@ -19,7 +19,7 @@ import type { OpenAPIConfig } from "./openapi/index.js";
 import { generateERDiagramFile } from "./diagram.js";
 import { generateSeedDataFile } from "./seed.js";
 import type { SeedConfig } from "./seed.js";
-import { generateGraphQLTypes } from "./graphql/index.js";
+import { generateGraphQLTypes, generateGraphQLOperations } from "./graphql/index.js";
 
 export function createPostgreSQLGenerator(): CodeGenerator {
   return Object.freeze({
@@ -64,6 +64,10 @@ export function createPostgreSQLGenerator(): CodeGenerator {
 
     generateGraphQL(schema: EntityRegistry): readonly GeneratedFile[] {
       return generateGraphQLTypes(schema);
+    },
+
+    generateGraphQLOperations(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
+      return generateGraphQLOperations(schema, queries);
     },
   });
 }
@@ -112,6 +116,10 @@ export function createMySQLGenerator(): CodeGenerator {
     generateGraphQL(schema: EntityRegistry): readonly GeneratedFile[] {
       return generateGraphQLTypes(schema);
     },
+
+    generateGraphQLOperations(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
+      return generateGraphQLOperations(schema, queries);
+    },
   });
 }
 
@@ -159,6 +167,10 @@ export function createSQLiteGenerator(): CodeGenerator {
     generateGraphQL(schema: EntityRegistry): readonly GeneratedFile[] {
       return generateGraphQLTypes(schema);
     },
+
+    generateGraphQLOperations(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
+      return generateGraphQLOperations(schema, queries);
+    },
   });
 }
 
@@ -205,6 +217,7 @@ export function generateAll(
   const diagramFiles = generator.generateERDiagram(schema);
   const seedFiles = generateSeedDataFile(schema, seed);
   const graphqlFiles = generator.generateGraphQL(schema);
+  const graphqlOperationFiles = generator.generateGraphQLOperations(schema, queries);
 
   const allFiles = [
     ...ddlFiles,
@@ -218,6 +231,7 @@ export function generateAll(
     ...diagramFiles,
     ...seedFiles,
     ...graphqlFiles,
+    ...graphqlOperationFiles,
   ];
 
   const manifest = generateManifest(schema, queries, allFiles);

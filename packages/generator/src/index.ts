@@ -15,6 +15,7 @@ export type { OpenAPIConfig, OpenAPIFormat, OpenAPIServerConfig, OpenAPIContactC
 
 // GraphQL
 export { generateGraphQLTypes, generateGraphQLSchema, entityToGraphQLType, fieldToGraphQLType, collectEnumTypes, toGraphQLEnumValue } from "./graphql/index.js";
+export { generateGraphQLOperations, generateGraphQLOperationsSchema, generateResultType, generateConnectionTypes, generatePageType, queryToGraphQLField, paramKindToGraphQL, shapeFieldToGraphQL } from "./graphql/index.js";
 export type { GraphQLEnumType } from "./graphql/index.js";
 
 // ER Diagram
