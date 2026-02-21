@@ -29,6 +29,7 @@ export { generateMigrationFiles, generateMigrationDirectory } from "./sql-genera
 export { createMigrationDialect } from "./dialects/factory.js";
 export { createPostgreSQLMigrationDialect } from "./dialects/postgresql.js";
 export { createMySQLMigrationDialect } from "./dialects/mysql.js";
+export { createSQLiteMigrationDialect } from "./dialects/sqlite.js";
 
 // Types
 export type {
