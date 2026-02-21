@@ -9,6 +9,7 @@ export { generateSchemas, generateEntitySchema, fieldKindToZod } from "./schema.
 
 // OpenAPI
 export { generateOpenAPISchemas, entityToJsonSchema, fieldToJsonSchema } from "./openapi/index.js";
+export { generateOpenAPIPaths, queryToPathItem, paramKindToJsonSchema, shapeFieldToJsonSchema } from "./openapi/index.js";
 
 // Manifest
 export { generateManifest } from "./manifest.js";

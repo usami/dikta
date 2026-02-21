@@ -17,6 +17,7 @@ export interface CodeGenerator {
   generateContractTests(queries: QueryRegistry): readonly GeneratedFile[];
   generateSchemas(schema: EntityRegistry): readonly GeneratedFile[];
   generateOpenAPI(schema: EntityRegistry): readonly GeneratedFile[];
+  generateOpenAPIPaths(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[];
 }
 
 // ── Dialect Abstraction Layer ────────────────────────────────

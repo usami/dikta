@@ -14,7 +14,7 @@ import { generateValidators as generateSQLiteValidators } from "./targets/sqlite
 import { generateContractTests as generateSQLiteContractTests } from "./targets/sqlite/test.js";
 import { generateManifest } from "./manifest.js";
 import { generateSchemas } from "./schema.js";
-import { generateOpenAPISchemas } from "./openapi/index.js";
+import { generateOpenAPISchemas, generateOpenAPIPaths } from "./openapi/index.js";
 
 export function createPostgreSQLGenerator(): CodeGenerator {
   return Object.freeze({
@@ -43,6 +43,10 @@ export function createPostgreSQLGenerator(): CodeGenerator {
 
     generateOpenAPI(schema: EntityRegistry): readonly GeneratedFile[] {
       return generateOpenAPISchemas(schema);
+    },
+
+    generateOpenAPIPaths(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
+      return generateOpenAPIPaths(schema, queries);
     },
   });
 }
@@ -75,6 +79,10 @@ export function createMySQLGenerator(): CodeGenerator {
     generateOpenAPI(schema: EntityRegistry): readonly GeneratedFile[] {
       return generateOpenAPISchemas(schema);
     },
+
+    generateOpenAPIPaths(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
+      return generateOpenAPIPaths(schema, queries);
+    },
   });
 }
 
@@ -101,6 +109,14 @@ export function createSQLiteGenerator(): CodeGenerator {
 
     generateSchemas(schema: EntityRegistry): readonly GeneratedFile[] {
       return generateSchemas(schema);
+    },
+
+    generateOpenAPI(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateOpenAPISchemas(schema);
+    },
+
+    generateOpenAPIPaths(schema: EntityRegistry, queries: QueryRegistry): readonly GeneratedFile[] {
+      return generateOpenAPIPaths(schema, queries);
     },
   });
 }
@@ -141,6 +157,7 @@ export function generateAll(
   const testFiles = generator.generateContractTests(queries);
   const schemaFiles = generator.generateSchemas(schema);
   const openAPIFiles = generator.generateOpenAPI(schema);
+  const openAPIPathFiles = generator.generateOpenAPIPaths(schema, queries);
 
   const allFiles = [
     ...ddlFiles,
@@ -149,6 +166,7 @@ export function generateAll(
     ...testFiles,
     ...schemaFiles,
     ...openAPIFiles,
+    ...openAPIPathFiles,
   ];
 
   const manifest = generateManifest(schema, queries, allFiles);

@@ -57,11 +57,11 @@ Generate OpenAPI 3.1 spec from entity + query contracts. This is the first "API 
 
 ### Phase 2 — Query Path Operations
 
-- [ ] `paths.ts` — QueryContract -> OpenAPI Path Item
+- [x] `paths.ts` — QueryContract -> OpenAPI Path Item
   - Map ParamKind to query/path parameter schemas
   - Map ShapeKind result fields to response schema
   - Generate `operationId` from query contract name
-- [ ] Support pagination metadata (cursor/offset) in response schemas
+- [x] Support pagination metadata (cursor/offset) in response schemas
 
 ### Phase 3 — Spec Assembly and Output
 
