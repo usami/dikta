@@ -17,6 +17,8 @@ import { generateSchemas } from "./schema.js";
 import { generateOpenAPISchemas, generateOpenAPIPaths, generateOpenAPISpec } from "./openapi/index.js";
 import type { OpenAPIConfig } from "./openapi/index.js";
 import { generateERDiagramFile } from "./diagram.js";
+import { generateSeedDataFile } from "./seed.js";
+import type { SeedConfig } from "./seed.js";
 
 export function createPostgreSQLGenerator(): CodeGenerator {
   return Object.freeze({
@@ -53,6 +55,10 @@ export function createPostgreSQLGenerator(): CodeGenerator {
 
     generateERDiagram(schema: EntityRegistry): readonly GeneratedFile[] {
       return generateERDiagramFile(schema);
+    },
+
+    generateSeedData(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateSeedDataFile(schema);
     },
   });
 }
@@ -93,6 +99,10 @@ export function createMySQLGenerator(): CodeGenerator {
     generateERDiagram(schema: EntityRegistry): readonly GeneratedFile[] {
       return generateERDiagramFile(schema);
     },
+
+    generateSeedData(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateSeedDataFile(schema);
+    },
   });
 }
 
@@ -132,6 +142,10 @@ export function createSQLiteGenerator(): CodeGenerator {
     generateERDiagram(schema: EntityRegistry): readonly GeneratedFile[] {
       return generateERDiagramFile(schema);
     },
+
+    generateSeedData(schema: EntityRegistry): readonly GeneratedFile[] {
+      return generateSeedDataFile(schema);
+    },
   });
 }
 
@@ -151,6 +165,7 @@ export function generateAll(
   queries: QueryRegistry,
   target: DatabaseTarget = "postgresql",
   openapi?: OpenAPIConfig,
+  seed?: SeedConfig,
 ): readonly GeneratedFile[] {
   // Validate contracts before generating
   const errors = queries.validate();
@@ -175,6 +190,7 @@ export function generateAll(
   const openAPIPathFiles = generator.generateOpenAPIPaths(schema, queries);
   const openAPISpecFiles = generateOpenAPISpec(schema, queries, openapi);
   const diagramFiles = generator.generateERDiagram(schema);
+  const seedFiles = generateSeedDataFile(schema, seed);
 
   const allFiles = [
     ...ddlFiles,
@@ -186,6 +202,7 @@ export function generateAll(
     ...openAPIPathFiles,
     ...openAPISpecFiles,
     ...diagramFiles,
+    ...seedFiles,
   ];
 
   const manifest = generateManifest(schema, queries, allFiles);
