@@ -40,7 +40,7 @@ Lightweight target for local dev / testing. SQLite's limited ALTER TABLE support
 
 - [x] Generator tests: DDL output, access layer, type mapping
 - [x] Migration tests: table rebuild correctness, data preservation
-- [ ] Integration test with better-sqlite3 in-memory database
+- [x] Integration test with better-sqlite3 in-memory database
 
 ---
 
