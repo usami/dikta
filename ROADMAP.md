@@ -2,7 +2,7 @@
 
 ## Context
 
-Dikta is a schema-first code generation monorepo with 4 packages: core, generator, agent-protocol, migration. Currently PostgreSQL-only. The `CodeGenerator` interface and `DiktaConfig.target` field already exist as extension points, making multi-DB support a natural next step.
+Dikta is a schema-first code generation monorepo with 4 packages: core, generator, agent-protocol, migration. Supports PostgreSQL and MySQL. The `CodeGenerator` interface, `DiktaConfig.target` field, and `MigrationDialect` abstraction provide extension points for additional database targets.
 
 ---
 
@@ -40,12 +40,24 @@ Dikta is a schema-first code generation monorepo with 4 packages: core, generato
   - `packages/generator/src/types.ts` — `CodeGenerator.generateDDL()` accepts optional `queries`
   - `packages/generator/src/index.ts` — export MySQL public API
 
-### Phase 3 — MySQL Migration
+### Phase 3 — MySQL Migration ✅
 
-- Abstract migration dialect in `packages/migration/`
-  - `sql-generator.ts` — MySQL DDL dialect (MODIFY COLUMN vs ALTER COLUMN TYPE)
-  - `safety.ts` — MySQL-specific risk evaluation (ALGORITHM=INSTANT/INPLACE/COPY)
-  - Verify SQL using MySQL `information_schema` (similar but not identical to PG)
+- [x] Define `MigrationDialect` interface (quote, mapFieldType, mapCascade, enumColumnType, createTable, addColumn, alterColumn, dropColumn, dropTable, addCheckConstraint, dropConstraint, addForeignKey, verifyTable, verifyColumn)
+- [x] Extract PostgreSQL-specific logic into `createPostgreSQLMigrationDialect()`
+- [x] Create `packages/migration/src/dialects/mysql.ts`
+  - Backtick quoting, `MODIFY COLUMN` (vs PG `ALTER COLUMN TYPE`), native `ENUM()`, `ENGINE=InnoDB`, `DROP FOREIGN KEY` (vs PG `DROP CONSTRAINT`)
+- [x] Add `createMigrationDialect(target)` factory dispatch
+- [x] Make `sql-generator.ts` target-aware via `MigrationDialect`
+- [x] Make `safety.ts` target-aware (MySQL `ALGORITHM=INSTANT/INPLACE/COPY` notes, PG `pg_repack` notes)
+- [x] Add MySQL migration tests (`mysql-sql-generator.test.ts`, `mysql-safety.test.ts`)
+- Files modified:
+  - `packages/migration/src/types.ts` — `MigrationDialect` interface
+  - `packages/migration/src/dialects/postgresql.ts` — `createPostgreSQLMigrationDialect()`
+  - `packages/migration/src/dialects/mysql.ts` — `createMySQLMigrationDialect()`
+  - `packages/migration/src/dialects/factory.ts` — `createMigrationDialect(target)` dispatch
+  - `packages/migration/src/sql-generator.ts` — routes DDL generation through dialect
+  - `packages/migration/src/safety.ts` — target-aware risk evaluation
+  - `packages/migration/src/index.ts` — export dialect factory + types
 
 ---
 
