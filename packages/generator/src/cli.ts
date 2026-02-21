@@ -4,8 +4,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { Command } from "commander";
 import { loadConfig } from "./config.js";
-import { generateAll, createPostgreSQLGenerator } from "./generator.js";
-import { generateDDL } from "./targets/postgresql/ddl.js";
+import { generateAll, createGenerator } from "./generator.js";
 import {
   generateAgentContext,
   serializeAgentContext,
@@ -25,12 +24,12 @@ function writeFiles(files: readonly GeneratedFile[], outputDir: string): void {
 
 const program = new Command()
   .name("dikta")
-  .description("Code generator for Dikta intent schemas and query contracts")
+  .description("Target-aware code generator for Dikta intent schemas and query contracts")
   .version("0.1.0");
 
 program
   .command("generate")
-  .description("Generate PostgreSQL DDL, access layer, validators, and tests")
+  .description("Generate DDL, access layer, validators, and tests for the configured target")
   .option("--ddl", "Generate only DDL files")
   .option("--access", "Generate only access layer files")
   .option("--validators", "Generate only validator files")
@@ -47,7 +46,7 @@ program
   }) => {
     try {
       const config = await loadConfig(opts.config);
-      const generator = createPostgreSQLGenerator();
+      const generator = createGenerator(config.target);
       const selective = opts.ddl || opts.access || opts.validators || opts.tests;
 
       let files: readonly GeneratedFile[];
@@ -55,7 +54,7 @@ program
       if (selective) {
         const parts: GeneratedFile[] = [];
         if (opts.ddl) {
-          parts.push(...generateDDL(config.schema, config.queries));
+          parts.push(...generator.generateDDL(config.schema));
         }
         if (opts.access) {
           parts.push(
@@ -70,7 +69,7 @@ program
         }
         files = parts;
       } else {
-        files = generateAll(config.schema, config.queries);
+        files = generateAll(config.schema, config.queries, config.target);
       }
 
       writeFiles(files, opts.output);

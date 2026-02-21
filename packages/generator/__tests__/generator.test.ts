@@ -12,7 +12,7 @@ import {
   defineQuery,
   createQueryRegistry,
 } from "@dikta/core";
-import { createPostgreSQLGenerator, generateAll } from "../src/generator.js";
+import { createPostgreSQLGenerator, createGenerator, generateAll } from "../src/generator.js";
 
 function makeFullSchema() {
   const Customer = defineEntity({
@@ -69,6 +69,27 @@ describe("createPostgreSQLGenerator", () => {
     expect(typeof gen.generateAccessLayer).toBe("function");
     expect(typeof gen.generateValidators).toBe("function");
     expect(typeof gen.generateContractTests).toBe("function");
+  });
+});
+
+describe("createGenerator", () => {
+  it("should return a valid CodeGenerator for postgresql", () => {
+    const gen = createGenerator("postgresql");
+    expect(typeof gen.generateDDL).toBe("function");
+    expect(typeof gen.generateAccessLayer).toBe("function");
+    expect(typeof gen.generateValidators).toBe("function");
+    expect(typeof gen.generateContractTests).toBe("function");
+  });
+
+  it("should default to postgresql when no target is specified", () => {
+    const gen = createGenerator();
+    expect(typeof gen.generateDDL).toBe("function");
+  });
+
+  it("should throw for mysql target (not yet implemented)", () => {
+    expect(() => createGenerator("mysql")).toThrow(
+      /MySQL target is not yet implemented/,
+    );
   });
 });
 

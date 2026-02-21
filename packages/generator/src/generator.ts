@@ -1,5 +1,5 @@
 import type { EntityRegistry, QueryRegistry } from "@dikta/core";
-import type { GeneratedFile, CodeGenerator } from "./types.js";
+import type { GeneratedFile, CodeGenerator, DatabaseTarget } from "./types.js";
 import { generateDDL } from "./targets/postgresql/ddl.js";
 import { generateAccessLayer } from "./targets/postgresql/access.js";
 import { generateValidators } from "./targets/postgresql/validator.js";
@@ -29,9 +29,21 @@ export function createPostgreSQLGenerator(): CodeGenerator {
   });
 }
 
+export function createGenerator(target: DatabaseTarget = "postgresql"): CodeGenerator {
+  switch (target) {
+    case "postgresql":
+      return createPostgreSQLGenerator();
+    case "mysql":
+      throw new Error(
+        "MySQL target is not yet implemented. See ROADMAP.md Phase 2.",
+      );
+  }
+}
+
 export function generateAll(
   schema: EntityRegistry,
   queries: QueryRegistry,
+  target: DatabaseTarget = "postgresql",
 ): readonly GeneratedFile[] {
   // Validate contracts before generating
   const errors = queries.validate();
@@ -45,7 +57,7 @@ export function generateAll(
     );
   }
 
-  const generator = createPostgreSQLGenerator();
+  const generator = createGenerator(target);
 
   const ddlFiles = generateDDL(schema, queries);
   const accessFiles = generator.generateAccessLayer(schema, queries);
